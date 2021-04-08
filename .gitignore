@@ -75,7 +75,7 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
-# exclude baserate from source control by default
+# exclude fuelconsump from source control by default
 /data/
 
 # Mac OS-specific storage files
