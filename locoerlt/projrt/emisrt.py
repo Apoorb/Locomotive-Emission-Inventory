@@ -9,9 +9,17 @@ from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED
 
 
 def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
-    """"""
+    """
+
+    Parameters
+    ----------
+    path_exp_pol_list_
+
+    Returns
+    -------
+
+    """
     x_pol = pd.ExcelFile(path_exp_pol_list_)
-    x_pol.sheet_names
     pol_df = x_pol.parse("NP Expected Pollutants List")
     pol_lab = x_pol.parse("Xwalk_pollutant_descriptions")
     pol_cols = [
@@ -30,7 +38,7 @@ def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
             "poldesc": "pol_desc",
         }
     )
-    pol_df_fil = (
+    pol_df_fil_ = (
         pol_df.loc[lambda df: df.Sector == "Mobile - Locomotives"]
         .drop(columns=["EPA Tool?"])
         .melt(
@@ -46,28 +54,20 @@ def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
         )
         .assign(pollutant=lambda df: (df.pollutant.replace({"Xylenes": 1330207})))
     )
-    return pol_df_fil
-
-    ...
+    return pol_df_fil_
 
 
-def get_fleet_mix() -> pd.DataFrame():
-    """"""
-    ...
+def hap_speciation_mult(path_hap_speciation_: str) -> pd.DataFrame:
+    """
 
+    Parameters
+    ----------
+    path_hap_speciation_
 
-def epa_tech_report_rates() -> pd.DataFrame:
-    """"""
-    ...
+    Returns
+    -------
 
-
-def mass_balance_rates() -> pd.DataFrame:
-    """"""
-    ...
-
-
-def hap_speciation_rates(path_hap_speciation_: str) -> pd.DataFrame:
-    """"""
+    """
     x_hap = pd.ExcelFile(path_hap_speciation_)
     speciation_2020 = x_hap.parse("Non Point 2020 Speciation Table")
 
@@ -75,8 +75,7 @@ def hap_speciation_rates(path_hap_speciation_: str) -> pd.DataFrame:
         col: inflection.underscore(col).replace(" ", "_")
         for col in speciation_2020.columns
     }
-
-    speciation_2020_fil = (
+    speciation_2020_fil_ = (
         speciation_2020.rename(columns=hap_rename_map)
         .rename(columns={"scc_assignment": "scc", "data_category_code": "dat_cat_code"})
         .sort_values(by=["input_pollutant_code", "output_pollutant_description", "scc"])
@@ -98,43 +97,20 @@ def hap_speciation_rates(path_hap_speciation_: str) -> pd.DataFrame:
             ]
         )
     )
-    return speciation_2020_fil
+    return speciation_2020_fil_
 
 
-def cap_hap_combined_rates() -> pd.DataFrame:
-    """"""
-    ...
+def epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac_: str) -> pd.DataFrame:
+    """
 
+    Parameters
+    ----------
+    path_nox_pm10_hc_epa_em_fac_
 
-if __name__ == "__main__":
-    # Expected Pollutant List: NEI 2017-->Nonpoint-->Expected Pollutant List
-    # for Nonpoint SCCs
-    # https://www.epa.gov/air-emissions-inventories/2017-national-emissions
-    # -inventory-nei-data
-    # https://www.epa.gov/sites/production/files/2018-07
-    # /np_expected_poll_list_complete_v1.xlsx
-    path_exp_pol_list = os.path.join(
-        PATH_INTERIM, "epa_pol_list", "np_expected_poll_list_complete_v1.xlsx"
-    )
-    # Hazardous air pollutants speciation table from EPA NEI 2017 supporting
-    # docs: NEI 2017 --> Supporting Data and Summaries --> nonpoint/
-    # --> 2017Rail_HAP_AugmentationProfileAssignmentFactors_20200128.xlsx
-    # https://www.epa.gov/air-emissions-inventories/2017-national-emissions
-    # -inventory-nei-data
-    # https://gaftp.epa.gov/air/nei/2017/doc/supporting_data/nonpoint
-    # /2017Rail_HAP_AugmentationProfileAssignmentFactors_20200128.xlsx
-    path_hap_speciation = os.path.join(
-        PATH_INTERIM,
-        "epa_speciation_table",
-        "power_query",
-        "AugmentationProfileAssignmentFactors_Rail_2285002xxx_04072021.xlsx",
-    )
+    Returns
+    -------
 
-    # Emission factors table.
-    path_nox_pm10_hc_epa_em_fac = os.path.join(
-        PATH_INTERIM, "epa_emission_rates", "epa_2009_emission_rates_nox_pm10_hc.xlsx"
-    )
-
+    """
     map_ssc_desc_4 = {
         "large_line_haul": "Line Haul Locomotives: Class I Operations",
         "small_rr": "Line Haul Locomotives: Class II / III Operations",
@@ -144,12 +120,13 @@ if __name__ == "__main__":
         ],
         "large_switch": "Yard Locomotives",
     }
-    nox_pm10_hc_epa_em_fac = pd.read_excel(path_nox_pm10_hc_epa_em_fac)
-    nox_pm10_hc_epa_em_fac_impute = (
+    nox_pm10_hc_epa_em_fac = pd.read_excel(path_nox_pm10_hc_epa_em_fac_)
+    nox_pm10_hc_epa_em_fac_impute_ = (
         nox_pm10_hc_epa_em_fac.assign(
             year=lambda df: np.select(
                 [df.year == 2040, df.year != 2040],
                 [set(np.arange(2040, 2051)), df.year],
+                # Fill 2040 values to years 2040 to 2050
                 np.nan,
             ),
             scc_description_level_4=lambda df: df.carriers.map(map_ssc_desc_4),
@@ -159,15 +136,26 @@ if __name__ == "__main__":
         .dropna(subset=["scc_description_level_4"])
         .filter(items=["scc_description_level_4", "pollutant", "year", "em_fac"])
     )
+    return nox_pm10_hc_epa_em_fac_impute_
 
-    pol_df_fil = expected_pol_list(path_exp_pol_list)
-    speciation_2020_fil = hap_speciation_rates(path_hap_speciation)
 
-    cap_df = pol_df_fil.query("pol_type=='CAP'").filter(
+def cap_fac_template(all_pol_df, speciation_df) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    all_pol_df
+    speciation_df
+
+    Returns
+    -------
+
+    """
+    cap_df = all_pol_df.query("pol_type=='CAP'").filter(
         items=["scc", "pollutant", "pol_type", "pol_desc"]
     )
-    em_fac_df_template = (
-        speciation_2020_fil[
+    em_fac_df_template_ = (
+        speciation_df[
             [
                 "dat_cat_code",
                 "scc",
@@ -182,10 +170,48 @@ if __name__ == "__main__":
         .merge(cap_df, on=["scc"])
         .assign(anals_yr=np.nan, em_fac=np.nan, em_units="grams/gallon")
     )
+    return em_fac_df_template_
 
-    # Lead ?
 
-    co_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "CO"]
+def co2_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    em_fac_df_template_
+
+    Returns
+    -------
+
+    """
+    co2_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "CO"].assign(
+        pollutant="CO2",
+        pol_type="GHG",
+        pol_desc="Carbon Dioxide",
+    )
+
+    co2_em_fac_df_1 = co2_em_fac_df.assign(
+        em_fac=2778 * 0.99 * (44 / 12),
+        # Diesel carbon content per gallon
+        # of diesel * oxidation factor * molecular wt of CO2 by C
+        # https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1001YTF.txt
+        anals_yr=[list(np.arange(2011, 2051, 1))] * len(co2_em_fac_df),
+    ).explode(column="anals_yr")
+    return co2_em_fac_df_1
+
+
+def co_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    em_fac_df_template_
+
+    Returns
+    -------
+
+    """
+    co_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "CO"]
 
     co_em_fac_df_1 = co_em_fac_df.assign(
         em_fac=lambda df: np.select(
@@ -211,31 +237,48 @@ if __name__ == "__main__":
         ),
         anals_yr=[list(np.arange(2011, 2051, 1))] * len(co_em_fac_df),
     ).explode(column="anals_yr")
+    return co_em_fac_df_1
 
-    co2_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "CO"].assign(
-        pollutant="CO2",
-        pol_type="GHG",
-        pol_desc="Carbon Dioxide",
-    )
 
-    co2_em_fac_df_1 = co2_em_fac_df.assign(
-        em_fac=2778 * 0.99 * (44 / 12),
-        # Diesel carbon content per gallon
-        # of diesel * oxidation factor * molecular wt of CO2 by C
-        # https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1001YTF.txt
-        anals_yr=[list(np.arange(2011, 2051, 1))] * len(co2_em_fac_df),
-    ).explode(column="anals_yr")
+def nh3_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
+    """
 
-    nh3_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "NH3"]
+    Parameters
+    ----------
+    em_fac_df_template_
+
+    Returns
+    -------
+
+    """
+    nh3_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "NH3"]
     nh3_em_fac_df_1 = nh3_em_fac_df.assign(
         em_fac=1.83e-04 * 453.592,
         # Table III-6, 2nd row
         # https://19january2017snapshot.epa.gov/sites/production/files/2015-08/documents/eiip_areasourcesnh3.pdf
         anals_yr=[list(np.arange(2011, 2051, 1))] * len(nh3_em_fac_df),
     ).explode(column="anals_yr")
+    return nh3_em_fac_df_1
 
-    so2_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "SO2"]
 
+def so2_fac(
+        em_fac_df_template_: pd.DataFrame,
+        pre_2011_sulfur_ppm=500,
+        post_2011_sulfur_ppm=15
+) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    em_fac_df_template_
+    pre_2011_sulfur_ppm
+    post_2011_sulfur_ppm
+
+    Returns
+    -------
+
+    """
+    so2_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "SO2"]
     so2_em_fac_df_1 = (
         so2_em_fac_df.assign(
             anals_yr=[list(np.arange(2011, 2051, 1))] * len(so2_em_fac_df),
@@ -248,8 +291,8 @@ if __name__ == "__main__":
                     df.anals_yr >= 2012,
                 ],
                 [
-                    (0.1346 * 23809.5) * 0.97 * (64 / 32) * 500 * 1e-6,
-                    (0.1346 * 23809.5) * 0.97 * (64 / 32) * 15 * 1e-6
+                    (0.1346 * 23809.5) * 0.97 * (64 / 32) * pre_2011_sulfur_ppm * 1e-6,
+                    (0.1346 * 23809.5) * 0.97 * (64 / 32) * post_2011_sulfur_ppm * 1e-6
                     # Diesel density in metric tons/ bbl is 0.1346.
                     # metric ton/ bbl to grams/gallon conversion is
                     # 23,809.5. Source: TAble MM--1 in
@@ -267,90 +310,108 @@ if __name__ == "__main__":
             ),
         )
     )
+    return so2_em_fac_df_1
 
-    nox_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "NOX"]
-    nox_em_fac_df_1 = (
-        nox_em_fac_df.drop(columns="em_fac")
+
+def epa_2009_proj_table_fac(
+        em_fac_df_template_: pd.DataFrame,
+        pollutant: str,
+        epa_2009_rts: pd.DataFrame,
+        ) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    em_fac_df_template_
+    pollutant
+    epa_2009_rts
+
+    Returns
+    -------
+
+    """
+    pol_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == pollutant]
+    pol_em_fac_df_1 = (
+        pol_em_fac_df.drop(columns="em_fac")
         .assign(
-            anals_yr=[list(np.arange(2011, 2051, 1))] * len(so2_em_fac_df),
+            anals_yr=[list(np.arange(2011, 2051, 1))] * len(pol_em_fac_df),
         )
         .explode(column="anals_yr")
         .merge(
-            nox_pm10_hc_epa_em_fac_impute,
+            epa_2009_rts,
             left_on=["scc_description_level_4", "pollutant", "anals_yr"],
             right_on=["scc_description_level_4", "pollutant", "year"],
             how="left",
         )
         .drop(columns="year")
     )
+    return pol_em_fac_df_1
 
-    pm10_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "PM10-PRI"]
-    pm10_em_fac_df_1 = (
-        pm10_em_fac_df.drop(columns="em_fac")
-        .assign(
-            anals_yr=[list(np.arange(2011, 2051, 1))] * len(so2_em_fac_df),
-        )
-        .explode(column="anals_yr")
-        .merge(
-            nox_pm10_hc_epa_em_fac_impute,
-            left_on=["scc_description_level_4", "pollutant", "anals_yr"],
-            right_on=["scc_description_level_4", "pollutant", "year"],
-            how="left",
-        )
-        .drop(columns="year")
-    )
 
-    pm25_epa_em_fac_impute = nox_pm10_hc_epa_em_fac_impute[
+def pm25_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    epa_2009_rts
+
+    Returns
+    -------
+
+    """
+    pm25_epa_em_fac_impute_ = epa_2009_rts[
         lambda df: df.pollutant == "PM10-PRI"
     ].assign(
         pollutant="PM25-PRI",
         em_fac=lambda df: df.em_fac * 0.97,  # Page 4 of P100500B.pdf
     )
-    pm25_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "PM25-PRI"]
-    pm25_em_fac_df_1 = (
-        pm25_em_fac_df.drop(columns="em_fac")
-        .assign(
-            anals_yr=[list(np.arange(2011, 2051, 1))] * len(so2_em_fac_df),
-        )
-        .explode(column="anals_yr")
-        .merge(
-            pm25_epa_em_fac_impute,
-            left_on=["scc_description_level_4", "pollutant", "anals_yr"],
-            right_on=["scc_description_level_4", "pollutant", "year"],
-            how="left",
-        )
-        .drop(columns="year")
-    )
+    return pm25_epa_em_fac_impute_
 
-    voc_epa_em_fac_impute = nox_pm10_hc_epa_em_fac_impute[
+
+def voc_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    epa_2009_rts
+
+    Returns
+    -------
+
+    """
+    voc_epa_em_fac_impute = epa_2009_rts[
         lambda df: df.pollutant == "HC"
     ].assign(
-        pollutant="VOC", em_fac=lambda df: df.em_fac * 1.053  # Page 4 of P100500B.pdf
+        pollutant="VOC", em_fac=lambda df: df.em_fac * 1.053
+        # Page 4 of P100500B.pdf
     )
+    return voc_epa_em_fac_impute
 
-    voc_em_fac_df = em_fac_df_template[lambda df: df.pollutant == "VOC"]
-    voc_em_fac_df_1 = (
-        voc_em_fac_df.drop(columns="em_fac")
-        .assign(
-            anals_yr=[list(np.arange(2011, 2051, 1))] * len(so2_em_fac_df),
-        )
-        .explode(column="anals_yr")
-        .merge(
-            voc_epa_em_fac_impute,
-            left_on=["scc_description_level_4", "pollutant", "anals_yr"],
-            right_on=["scc_description_level_4", "pollutant", "year"],
-            how="left",
-        )
-        .drop(columns="year")
-    )
 
-    speciation_2020_fil_1 = speciation_2020_fil.assign(
-        anals_yr=[list(np.arange(2011, 2051, 1))] * len(speciation_2020_fil)
+def explode_speciation(speciation_2020_fil_: pd.DataFrame) -> pd.DataFrame:
+    """
+
+    Parameters
+    ----------
+    speciation_2020_fil_
+
+    Returns
+    -------
+
+    """
+    speciation_2020_fil_1 = speciation_2020_fil_.assign(
+        anals_yr=[list(np.arange(2011, 2051, 1))] * len(speciation_2020_fil_)
     ).explode("anals_yr")
-    voc_pm25_fac_df_1 = pd.concat([pm25_em_fac_df_1, voc_em_fac_df_1])
+    return speciation_2020_fil_1
+
+
+def hap_fac(pm25_em_fac: pd.DataFrame,
+            voc_em_fac: pd.DataFrame,
+            speciation_2020_fil_expd_: pd.DataFrame) -> pd.DataFrame:
+    voc_pm25_fac_df_1 = pd.concat([pm25_em_fac, voc_em_fac])
 
     hap_em_fac_df_1 = (
-        speciation_2020_fil_1.merge(
+        speciation_2020_fil_expd_.merge(
             (
                 voc_pm25_fac_df_1.rename(columns={"em_fac": "em_fac_input_pol"}).drop(
                     columns=["pol_type"]
@@ -385,9 +446,7 @@ if __name__ == "__main__":
         .drop(columns=["pollutant", "pol_desc"])
         .assign(em_fac=lambda df: df.em_fac_input_pol * df.multiplication_factor)
         .drop(columns=["em_fac_input_pol"])
-        .filter()
     )
-
     rename_hap_map = {
         "dat_cat_code",
         "scc",
@@ -431,20 +490,11 @@ if __name__ == "__main__":
             ]
         )
     )
+    return hap_em_fac_df_2
 
-    ghg_cap_hap_em_fac = pd.concat(
-        [
-            co2_em_fac_df_1,
-            co_em_fac_df_1,
-            nox_em_fac_df_1,
-            voc_em_fac_df_1,
-            nh3_em_fac_df_1,
-            so2_em_fac_df_1,
-            pm10_em_fac_df_1,
-            pm25_em_fac_df_1,
-            hap_em_fac_df_2,
-        ]
-    )
+
+def testing_missing_vals():
+    # FixMe
     # Testing
     ###########################################################################
     # Pollutants needed based on expected pollutant list and not in
@@ -459,3 +509,84 @@ if __name__ == "__main__":
             ["CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
         )
     ]
+
+
+if __name__ == "__main__":
+    # Expected Pollutant List: NEI 2017-->Nonpoint-->Expected Pollutant List
+    # for Nonpoint SCCs
+    # https://www.epa.gov/air-emissions-inventories/2017-national-emissions
+    # -inventory-nei-data
+    # https://www.epa.gov/sites/production/files/2018-07
+    # /np_expected_poll_list_complete_v1.xlsx
+    path_exp_pol_list = os.path.join(
+        PATH_INTERIM, "epa_pol_list", "np_expected_poll_list_complete_v1.xlsx"
+    )
+    # Hazardous air pollutants speciation table from EPA NEI 2017 supporting
+    # docs: NEI 2017 --> Supporting Data and Summaries --> nonpoint/
+    # --> 2017Rail_HAP_AugmentationProfileAssignmentFactors_20200128.xlsx
+    # https://www.epa.gov/air-emissions-inventories/2017-national-emissions
+    # -inventory-nei-data
+    # https://gaftp.epa.gov/air/nei/2017/doc/supporting_data/nonpoint
+    # /2017Rail_HAP_AugmentationProfileAssignmentFactors_20200128.xlsx
+    path_hap_speciation = os.path.join(
+        PATH_INTERIM,
+        "epa_speciation_table",
+        "power_query",
+        "AugmentationProfileAssignmentFactors_Rail_2285002xxx_04072021.xlsx",
+    )
+
+    # Emission factors table.
+    path_nox_pm10_hc_epa_em_fac = os.path.join(
+        PATH_INTERIM, "epa_emission_rates",
+        "epa_2009_emission_rates_nox_pm10_hc.xlsx"
+    )
+
+    pol_df_fil = expected_pol_list(path_exp_pol_list)
+    speciation_2020_fil = hap_speciation_mult(path_hap_speciation)
+    nox_pm10_hc_epa_em_fac_impute = epa_tech_report_fac(
+        path_nox_pm10_hc_epa_em_fac)
+    em_fac_df_template = cap_fac_template(
+        all_pol_df=pol_df_fil,
+        speciation_df=speciation_2020_fil
+    )
+
+    em_fac_res_dict = {}
+    em_fac_res_dict["co2"] = co2_fac(em_fac_df_template_=em_fac_df_template)
+    em_fac_res_dict["co"] = co_fac(em_fac_df_template_=em_fac_df_template)
+    em_fac_res_dict["nh3"] = nh3_fac(em_fac_df_template_=em_fac_df_template)
+    em_fac_res_dict["so2"] = so2_fac(em_fac_df_template_=em_fac_df_template)
+    em_fac_res_dict["nox"] = epa_2009_proj_table_fac(
+        em_fac_df_template_=em_fac_df_template,
+        pollutant="NOX",
+        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute
+    )
+    em_fac_res_dict["pm10"] = epa_2009_proj_table_fac(
+        em_fac_df_template_=em_fac_df_template,
+        pollutant="PM10-PRI",
+        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute
+    )
+    pm25_epa_em_fac_impute = pm25_fac(
+        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
+    em_fac_res_dict["pm25"] = epa_2009_proj_table_fac(
+        em_fac_df_template_=em_fac_df_template,
+        pollutant="PM25-PRI",
+        epa_2009_rts=pm25_epa_em_fac_impute
+    )
+    voc_epa_em_fac_impute = voc_fac(
+        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
+    em_fac_res_dict["voc"] = epa_2009_proj_table_fac(
+        em_fac_df_template_=em_fac_df_template,
+        pollutant="VOC",
+        epa_2009_rts=voc_epa_em_fac_impute
+    )
+    speciation_2020_fil_expd = explode_speciation(
+        speciation_2020_fil_=speciation_2020_fil)
+    em_fac_res_dict["hap"] =hap_fac(
+        pm25_em_fac=em_fac_res_dict["pm25"],
+        voc_em_fac=em_fac_res_dict["voc"],
+        speciation_2020_fil_expd_=speciation_2020_fil_expd)
+
+    # Lead ?
+    ghg_cap_hap_em_fac = pd.concat(em_fac_res_dict.values())
+
+
