@@ -15,3 +15,5 @@ ipython
 pandas
 numpy
 inflection
+xlrd
+openpyxl
