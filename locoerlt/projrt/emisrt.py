@@ -10,14 +10,21 @@ from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED
 
 def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
     """
+    Get the expected list of pollutants from the 2017 expected list of
+    pollutants file:
+    https://www.epa.gov/sites/production/files/2018-07/np_expected_poll_list_complete_v1.xlsx
+
+    Change "Xylenes" to 1330207 to match the nomenclature in speciation table.
 
     Parameters
     ----------
     path_exp_pol_list_
+        Path to the expected list of pollutants xlsx.
 
     Returns
     -------
-
+    pd.DataFrame
+        Dataframe of expected list of pollutants.
     """
     x_pol = pd.ExcelFile(path_exp_pol_list_)
     pol_df = x_pol.parse("NP Expected Pollutants List")
@@ -59,14 +66,18 @@ def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
 
 def hap_speciation_mult(path_hap_speciation_: str) -> pd.DataFrame:
     """
+    Use the most recent EPA speciation table. This speciation table would
+    likely be used for 2020 NEI.
 
     Parameters
     ----------
-    path_hap_speciation_
+    path_hap_speciation_:
+        Path to the speciation data.
 
     Returns
     -------
-
+    pd.DataFrame
+        Cleaned speciation table.
     """
     x_hap = pd.ExcelFile(path_hap_speciation_)
     speciation_2020 = x_hap.parse("Non Point 2020 Speciation Table")
@@ -102,13 +113,23 @@ def hap_speciation_mult(path_hap_speciation_: str) -> pd.DataFrame:
 
 def epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac_: str) -> pd.DataFrame:
     """
+    Use the 2009 (most recent) EPA technical highlights emission factors for
+    locomotives for NOx, PM10, and HC:
+    https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt
+
+    EPA provides emission rates till 2040. 2040 rates are extended till 2050 to
+    get a conservative estimate of emission rates post 2040.
 
     Parameters
     ----------
-    path_nox_pm10_hc_epa_em_fac_
+    path_nox_pm10_hc_epa_em_fac_:
+        Excel file created from power BI. Contains NOx, PM10, and HC rates from
+        2006 to 2040 in long format.
 
     Returns
     -------
+    pd.DataFrame
+        NOx, PM10, and HC rates from 2006 to 2050.
 
     """
     map_ssc_desc_4 = {
@@ -139,17 +160,27 @@ def epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac_: str) -> pd.DataFrame:
     return nox_pm10_hc_epa_em_fac_impute_
 
 
-def cap_fac_template(all_pol_df, speciation_df) -> pd.DataFrame:
+def em_fac_template(all_pol_df: pd.DataFrame,
+                    speciation_df: pd.DataFrame) -> pd.DataFrame:
     """
+    Create a template that will be used to prepare emission rates for
+    different pollutants.
 
     Parameters
     ----------
-    all_pol_df
-    speciation_df
+    all_pol_df:
+        Get "scc", "pollutant", "pol_type", "pol_desc" columns from this
+        dataset.
+    speciation_df:
+        Get "dat_cat_code", "scc", "scc_description_level_1",
+        "scc_description_level_2", "scc_description_level_3",
+        "scc_description_level_4", "sector_description" from this dataset.
 
     Returns
     -------
-
+    pd.DataFrame
+        Template that will be used to prepare emission rates for different
+        pollutants.
     """
     cap_df = all_pol_df.query("pol_type=='CAP'").filter(
         items=["scc", "pollutant", "pol_type", "pol_desc"]
@@ -175,26 +206,19 @@ def cap_fac_template(all_pol_df, speciation_df) -> pd.DataFrame:
 
 def co2_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
     """
+    Get CO2 emission rates.
+    10,084 grams/gallon = 2778 * 0.99 * (44 / 12)
 
-    Parameters
-    ----------
-    em_fac_df_template_
-
-    Returns
-    -------
-
+    Diesel carbon content per gallon of diesel * oxidation factor * molecular wt
+    of CO2 by C: https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1001YTF.txt
     """
     co2_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "CO"].assign(
         pollutant="CO2",
         pol_type="GHG",
         pol_desc="Carbon Dioxide",
     )
-
     co2_em_fac_df_1 = co2_em_fac_df.assign(
         em_fac=2778 * 0.99 * (44 / 12),
-        # Diesel carbon content per gallon
-        # of diesel * oxidation factor * molecular wt of CO2 by C
-        # https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1001YTF.txt
         anals_yr=[list(np.arange(2011, 2051, 1))] * len(co2_em_fac_df),
     ).explode(column="anals_yr")
     return co2_em_fac_df_1
@@ -202,14 +226,9 @@ def co2_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
 
 def co_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
     """
-
-    Parameters
-    ----------
-    em_fac_df_template_
-
-    Returns
-    -------
-
+    Use table 1, 2, and 3 from the 2009 (most recent) EPA technical
+    highlights emission factors for locomotives:
+    https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt
     """
     co_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "CO"]
 
@@ -229,9 +248,9 @@ def co_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
                 df.scc_description_level_4.isin(["Yard Locomotives"]),
             ],
             [
-                1.28 * 20.8,  # P100500B.pdf Table 1 and 3
-                1.28 * 18.2,  # P100500B.pdf Table 1 and 3
-                1.83 * 15.2,  # P100500B.pdf Table 2 and 3
+                1.28 * 20.8,
+                1.28 * 18.2,
+                1.83 * 15.2,
             ],
             np.nan,
         ),
@@ -242,39 +261,60 @@ def co_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
 
 def nh3_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
     """
-
-    Parameters
-    ----------
-    em_fac_df_template_
-
-    Returns
-    -------
+    0.083 grams/gallon = 1.83e-04 * 453.592
+    Based on Table III-6, 2nd row in
+    https://19january2017snapshot.epa.gov/sites/production/files/2015-08/documents/eiip_areasourcesnh3.pdf
 
     """
     nh3_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "NH3"]
     nh3_em_fac_df_1 = nh3_em_fac_df.assign(
         em_fac=1.83e-04 * 453.592,
-        # Table III-6, 2nd row
-        # https://19january2017snapshot.epa.gov/sites/production/files/2015-08/documents/eiip_areasourcesnh3.pdf
         anals_yr=[list(np.arange(2011, 2051, 1))] * len(nh3_em_fac_df),
     ).explode(column="anals_yr")
     return nh3_em_fac_df_1
 
 
 def so2_fac(
-    em_fac_df_template_: pd.DataFrame, pre_2011_sulfur_ppm=500, post_2011_sulfur_ppm=15
+    em_fac_df_template_: pd.DataFrame,
+        pre_2011_sulfur_ppm=500,
+        post_2011_sulfur_ppm=15
 ) -> pd.DataFrame:
     """
+    **3.10861594** grams/gallon for 2011 **0.09325847817** grams/gallon for
+    2012 and
+    beyond.
+
+    1. Diesel density in metric tons/ bbl is 0.1346.
+    Metric ton/ bbl to grams/gallon conversion is 23,809.5. Source: Table  MM--1
+    in https://www.govinfo.gov/content/pkg/FR-2009-10-30/pdf/E9-23315.pdf
+
+    2. 97%: % of sulphur coverting to SO2. Source:
+    https://nepis.epa.gov/Exe/ZyPDF.cgi?Dockey=P10001SB.pdf
+
+    3. Molecular wt of SO2 by S: 64/32
+
+    4. Sulfur content:  https://clean-diesel.org/nonroad.html and
+    EPA420-F-04-032: https://nepis.epa.gov/Exe/ZyPURL.cgi
+    ?Dockey=P10001RN.txt
+
+    4.1 15 ppm 2012 and after
+
+    4.2 500 ppm 2011 and before # ERG uses 300 ppm
 
     Parameters
     ----------
-    em_fac_df_template_
-    pre_2011_sulfur_ppm
-    post_2011_sulfur_ppm
-
+    em_fac_df_template_:
+        Emission factor template.
+    pre_2011_sulfur_ppm:
+        2011 and pre-2011 sulfur content. I (Apoorb) am using 500 ppm, which, is
+        the regulatory limit.
+    post_2011_sulfur_ppm:
+            2012 and post-2012 sulfur content. I (Apoorb) am using 15 ppm,
+            which, is the regulatory limit (ULSD).
     Returns
     -------
-
+    pd.DataFrame
+        SO2 emission rate.
     """
     so2_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "SO2"]
     so2_em_fac_df_1 = (
@@ -291,18 +331,6 @@ def so2_fac(
                 [
                     (0.1346 * 23809.5) * 0.97 * (64 / 32) * pre_2011_sulfur_ppm * 1e-6,
                     (0.1346 * 23809.5) * 0.97 * (64 / 32) * post_2011_sulfur_ppm * 1e-6
-                    # Diesel density in metric tons/ bbl is 0.1346.
-                    # metric ton/ bbl to grams/gallon conversion is
-                    # 23,809.5. Source: TAble MM--1 in
-                    # https://www.govinfo.gov/content/pkg/FR-2009-10-30/pdf/E9-23315.pdf
-                    # 97%: % of sulphur coverting to SO2.
-                    # https://nepis.epa.gov/Exe/ZyPDF.cgi?Dockey=P10001SB.pdf
-                    # molecular wt of SO2 by S: 64/32
-                    # 15 ppm 2012 and after
-                    # 500 ppm 2011 and before # ERG uses 300 ppm
-                    # https://clean-diesel.org/nonroad.html
-                    # EPA420-F-04-032: https://nepis.epa.gov/Exe/ZyPURL.cgi
-                    # ?Dockey=P10001RN.txt
                 ],
                 np.nan,
             ),
@@ -317,17 +345,25 @@ def epa_2009_proj_table_fac(
     epa_2009_rts: pd.DataFrame,
 ) -> pd.DataFrame:
     """
+    Provides emission rates based on the data from epa_tech_report_fac()
+    function.
 
     Parameters
     ----------
     em_fac_df_template_
-    pollutant
+    pollutant:
+        Pollutant for which rates are needed. Should be one of the following:
+        [NOX, PM10, PM25, VOC]
     epa_2009_rts
 
     Returns
     -------
-
+    pd.DataFrame
+        Emission factors for 2011 to 2050 for the "pollutant" provided by the user.
     """
+    if pollutant not in ["NOX", "PM10", "PM25", "VOC"]:
+        raise ValueError('Function only handles the following pollutants: '
+                         '"NOX", "PM10", "PM25", "VOC"')
     pol_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == pollutant]
     pol_em_fac_df_1 = (
         pol_em_fac_df.drop(columns="em_fac")
@@ -346,16 +382,13 @@ def epa_2009_proj_table_fac(
     return pol_em_fac_df_1
 
 
-def pm25_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
+def create_pm25_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
     """
-
-    Parameters
-    ----------
-    epa_2009_rts
-
-    Returns
-    -------
-
+    Provides PM 25 emission rates based on the data from epa_tech_report_fac()
+    function. The output of this function will go into epa_2009_proj_table_fac()
+    to give the final emission rates for PM25.
+    PM 2.5  = 97% of PM 10; based on:
+    https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1001YTF.txt
     """
     pm25_epa_em_fac_impute_ = epa_2009_rts[
         lambda df: df.pollutant == "PM10-PRI"
@@ -366,16 +399,13 @@ def pm25_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
     return pm25_epa_em_fac_impute_
 
 
-def voc_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
+def create_voc_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
     """
-
-    Parameters
-    ----------
-    epa_2009_rts
-
-    Returns
-    -------
-
+    Provides VOC emission rates based on the data from epa_tech_report_fac()
+    function. The output of this function will go into epa_2009_proj_table_fac()
+    to give the final emission rates for PM25.
+    VOC = 1.053 * HC; based on:
+    https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1001YTF.txt
     """
     voc_epa_em_fac_impute = epa_2009_rts[lambda df: df.pollutant == "HC"].assign(
         pollutant="VOC",
@@ -387,14 +417,7 @@ def voc_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
 
 def explode_speciation(speciation_2020_fil_: pd.DataFrame) -> pd.DataFrame:
     """
-
-    Parameters
-    ----------
-    speciation_2020_fil_
-
-    Returns
-    -------
-
+    Create extra rows in the speciation data for different years.
     """
     speciation_2020_fil_1 = speciation_2020_fil_.assign(
         anals_yr=[list(np.arange(2011, 2051, 1))] * len(speciation_2020_fil_)
@@ -407,6 +430,11 @@ def hap_fac(
     voc_em_fac: pd.DataFrame,
     speciation_2020_fil_expd_: pd.DataFrame,
 ) -> pd.DataFrame:
+    """
+    Get the emission rate for HAPs by using the PM 2.5 and VOC emission rates
+    and multiplication factor from speciation table to convert them to
+    different HAP pollutant emission rate.
+    """
     voc_pm25_fac_df_1 = pd.concat([pm25_em_fac, voc_em_fac])
 
     hap_em_fac_df_1 = (
@@ -542,7 +570,7 @@ if __name__ == "__main__":
     pol_df_fil = expected_pol_list(path_exp_pol_list)
     speciation_2020_fil = hap_speciation_mult(path_hap_speciation)
     nox_pm10_hc_epa_em_fac_impute = epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac)
-    em_fac_df_template = cap_fac_template(
+    em_fac_df_template = em_fac_template(
         all_pol_df=pol_df_fil, speciation_df=speciation_2020_fil
     )
 
@@ -561,13 +589,13 @@ if __name__ == "__main__":
         pollutant="PM10-PRI",
         epa_2009_rts=nox_pm10_hc_epa_em_fac_impute,
     )
-    pm25_epa_em_fac_impute = pm25_fac(epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
+    pm25_epa_em_fac_impute = create_pm25_fac(epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
     em_fac_res_dict["pm25"] = epa_2009_proj_table_fac(
         em_fac_df_template_=em_fac_df_template,
         pollutant="PM25-PRI",
         epa_2009_rts=pm25_epa_em_fac_impute,
     )
-    voc_epa_em_fac_impute = voc_fac(epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
+    voc_epa_em_fac_impute = create_voc_fac(epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
     em_fac_res_dict["voc"] = epa_2009_proj_table_fac(
         em_fac_df_template_=em_fac_df_template,
         pollutant="VOC",
