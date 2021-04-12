@@ -262,9 +262,7 @@ def nh3_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
 
 
 def so2_fac(
-        em_fac_df_template_: pd.DataFrame,
-        pre_2011_sulfur_ppm=500,
-        post_2011_sulfur_ppm=15
+    em_fac_df_template_: pd.DataFrame, pre_2011_sulfur_ppm=500, post_2011_sulfur_ppm=15
 ) -> pd.DataFrame:
     """
 
@@ -314,10 +312,10 @@ def so2_fac(
 
 
 def epa_2009_proj_table_fac(
-        em_fac_df_template_: pd.DataFrame,
-        pollutant: str,
-        epa_2009_rts: pd.DataFrame,
-        ) -> pd.DataFrame:
+    em_fac_df_template_: pd.DataFrame,
+    pollutant: str,
+    epa_2009_rts: pd.DataFrame,
+) -> pd.DataFrame:
     """
 
     Parameters
@@ -379,10 +377,9 @@ def voc_fac(epa_2009_rts: pd.DataFrame) -> pd.DataFrame:
     -------
 
     """
-    voc_epa_em_fac_impute = epa_2009_rts[
-        lambda df: df.pollutant == "HC"
-    ].assign(
-        pollutant="VOC", em_fac=lambda df: df.em_fac * 1.053
+    voc_epa_em_fac_impute = epa_2009_rts[lambda df: df.pollutant == "HC"].assign(
+        pollutant="VOC",
+        em_fac=lambda df: df.em_fac * 1.053
         # Page 4 of P100500B.pdf
     )
     return voc_epa_em_fac_impute
@@ -405,9 +402,11 @@ def explode_speciation(speciation_2020_fil_: pd.DataFrame) -> pd.DataFrame:
     return speciation_2020_fil_1
 
 
-def hap_fac(pm25_em_fac: pd.DataFrame,
-            voc_em_fac: pd.DataFrame,
-            speciation_2020_fil_expd_: pd.DataFrame) -> pd.DataFrame:
+def hap_fac(
+    pm25_em_fac: pd.DataFrame,
+    voc_em_fac: pd.DataFrame,
+    speciation_2020_fil_expd_: pd.DataFrame,
+) -> pd.DataFrame:
     voc_pm25_fac_df_1 = pd.concat([pm25_em_fac, voc_em_fac])
 
     hap_em_fac_df_1 = (
@@ -537,17 +536,14 @@ if __name__ == "__main__":
 
     # Emission factors table.
     path_nox_pm10_hc_epa_em_fac = os.path.join(
-        PATH_INTERIM, "epa_emission_rates",
-        "epa_2009_emission_rates_nox_pm10_hc.xlsx"
+        PATH_INTERIM, "epa_emission_rates", "epa_2009_emission_rates_nox_pm10_hc.xlsx"
     )
 
     pol_df_fil = expected_pol_list(path_exp_pol_list)
     speciation_2020_fil = hap_speciation_mult(path_hap_speciation)
-    nox_pm10_hc_epa_em_fac_impute = epa_tech_report_fac(
-        path_nox_pm10_hc_epa_em_fac)
+    nox_pm10_hc_epa_em_fac_impute = epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac)
     em_fac_df_template = cap_fac_template(
-        all_pol_df=pol_df_fil,
-        speciation_df=speciation_2020_fil
+        all_pol_df=pol_df_fil, speciation_df=speciation_2020_fil
     )
 
     em_fac_res_dict = {}
@@ -558,35 +554,33 @@ if __name__ == "__main__":
     em_fac_res_dict["nox"] = epa_2009_proj_table_fac(
         em_fac_df_template_=em_fac_df_template,
         pollutant="NOX",
-        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute
+        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute,
     )
     em_fac_res_dict["pm10"] = epa_2009_proj_table_fac(
         em_fac_df_template_=em_fac_df_template,
         pollutant="PM10-PRI",
-        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute
+        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute,
     )
-    pm25_epa_em_fac_impute = pm25_fac(
-        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
+    pm25_epa_em_fac_impute = pm25_fac(epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
     em_fac_res_dict["pm25"] = epa_2009_proj_table_fac(
         em_fac_df_template_=em_fac_df_template,
         pollutant="PM25-PRI",
-        epa_2009_rts=pm25_epa_em_fac_impute
+        epa_2009_rts=pm25_epa_em_fac_impute,
     )
-    voc_epa_em_fac_impute = voc_fac(
-        epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
+    voc_epa_em_fac_impute = voc_fac(epa_2009_rts=nox_pm10_hc_epa_em_fac_impute)
     em_fac_res_dict["voc"] = epa_2009_proj_table_fac(
         em_fac_df_template_=em_fac_df_template,
         pollutant="VOC",
-        epa_2009_rts=voc_epa_em_fac_impute
+        epa_2009_rts=voc_epa_em_fac_impute,
     )
     speciation_2020_fil_expd = explode_speciation(
-        speciation_2020_fil_=speciation_2020_fil)
-    em_fac_res_dict["hap"] =hap_fac(
+        speciation_2020_fil_=speciation_2020_fil
+    )
+    em_fac_res_dict["hap"] = hap_fac(
         pm25_em_fac=em_fac_res_dict["pm25"],
         voc_em_fac=em_fac_res_dict["voc"],
-        speciation_2020_fil_expd_=speciation_2020_fil_expd)
+        speciation_2020_fil_expd_=speciation_2020_fil_expd,
+    )
 
     # Lead ?
     ghg_cap_hap_em_fac = pd.concat(em_fac_res_dict.values())
-
-
