@@ -160,8 +160,9 @@ def epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac_: str) -> pd.DataFrame:
     return nox_pm10_hc_epa_em_fac_impute_
 
 
-def em_fac_template(all_pol_df: pd.DataFrame,
-                    speciation_df: pd.DataFrame) -> pd.DataFrame:
+def em_fac_template(
+    all_pol_df: pd.DataFrame, speciation_df: pd.DataFrame
+) -> pd.DataFrame:
     """
     Create a template that will be used to prepare emission rates for
     different pollutants.
@@ -275,9 +276,7 @@ def nh3_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
 
 
 def so2_fac(
-    em_fac_df_template_: pd.DataFrame,
-        pre_2011_sulfur_ppm=500,
-        post_2011_sulfur_ppm=15
+    em_fac_df_template_: pd.DataFrame, pre_2011_sulfur_ppm=500, post_2011_sulfur_ppm=15
 ) -> pd.DataFrame:
     """
     **3.10861594** grams/gallon for 2011 **0.09325847817** grams/gallon for
@@ -330,7 +329,7 @@ def so2_fac(
                 ],
                 [
                     (0.1346 * 23809.5) * 0.97 * (64 / 32) * pre_2011_sulfur_ppm * 1e-6,
-                    (0.1346 * 23809.5) * 0.97 * (64 / 32) * post_2011_sulfur_ppm * 1e-6
+                    (0.1346 * 23809.5) * 0.97 * (64 / 32) * post_2011_sulfur_ppm * 1e-6,
                 ],
                 np.nan,
             ),
@@ -362,8 +361,10 @@ def epa_2009_proj_table_fac(
         Emission factors for 2011 to 2050 for the "pollutant" provided by the user.
     """
     if pollutant not in ["NOX", "PM10", "PM25", "VOC"]:
-        raise ValueError('Function only handles the following pollutants: '
-                         '"NOX", "PM10", "PM25", "VOC"')
+        raise ValueError(
+            "Function only handles the following pollutants: "
+            '"NOX", "PM10", "PM25", "VOC"'
+        )
     pol_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == pollutant]
     pol_em_fac_df_1 = (
         pol_em_fac_df.drop(columns="em_fac")
