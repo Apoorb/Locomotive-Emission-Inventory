@@ -113,6 +113,29 @@ def hap_speciation_mult(path_hap_speciation_: str) -> pd.DataFrame:
     return speciation_2020_fil_
 
 
+def pb_speciation_builder(speciation_2020_fil_: pd.DataFrame) -> pd.DataFrame:
+    """
+    Create speciation table for lead based on the ERG Table 5-6 Hazardous Air
+    Pollutant Speciation Profile for Locomotove Activities. ERG used 2011
+    NEI speciation table.
+    """
+    pb_template_df = speciation_2020_fil_.drop_duplicates([
+        'dat_cat_code', 'scc', 'scc_description_level_1',
+        'scc_description_level_2', 'scc_description_level_3',
+        'scc_description_level_4', 'sector_description'])
+    pb_speciation_df = (
+        pb_template_df
+        .assign(
+            input_pollutant_code='PM10-PRI',
+            input_pollutant_description='PM10 Primary (Filt + Cond)',
+            output_pollutant_code=7439921,
+            output_pollutant_description="Lead",
+            multiplication_factor=8.405e-05 # ERG report
+        )
+    )
+    return pb_speciation_df
+
+
 def epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac_: str) -> pd.DataFrame:
     """
     Use the 2009 (most recent) EPA technical highlights emission factors for
@@ -429,16 +452,16 @@ def explode_speciation(speciation_2020_fil_: pd.DataFrame) -> pd.DataFrame:
 
 
 def hap_fac(
-    pm25_em_fac: pd.DataFrame,
-    voc_em_fac: pd.DataFrame,
+    voc_pm25_em_fac_list: list[pd.DataFrame],
     speciation_2020_fil_expd_: pd.DataFrame,
+    pol_type='HAP'
 ) -> pd.DataFrame:
     """
     Get the emission rate for HAPs by using the PM 2.5 and VOC emission rates
     and multiplication factor from speciation table to convert them to
     different HAP pollutant emission rate.
     """
-    voc_pm25_fac_df_1 = pd.concat([pm25_em_fac, voc_em_fac])
+    voc_pm25_fac_df_1 = pd.concat(voc_pm25_em_fac_list)
 
     hap_em_fac_df_1 = (
         speciation_2020_fil_expd_.merge(
@@ -495,7 +518,7 @@ def hap_fac(
         "em_fac",
     }
     hap_em_fac_df_2 = (
-        hap_em_fac_df_1.assign(pol_type="HAP")
+        hap_em_fac_df_1.assign(pol_type="pol_type")
         .rename(
             columns={
                 "output_pollutant_code": "pollutant",
@@ -529,6 +552,7 @@ def testing_missing_vals():
     ###########################################################################
     # Pollutants needed based on expected pollutant list and not in
     # speciation table and vice-versa.
+    # FixMe: Write HAP Speciation vs. List of Expected Pollutants
     pol_df_fil_speciation = pol_df_fil.merge(
         speciation_2020_fil.loc[lambda df: df.multiplication_factor != 0],
         left_on=["pollutant", "scc"],
@@ -578,6 +602,7 @@ if __name__ == "__main__":
 
     pol_df_fil = expected_pol_list(path_exp_pol_list)
     speciation_2020_fil = hap_speciation_mult(path_hap_speciation)
+    pb_speciation_2011 = pb_speciation_builder(speciation_2020_fil)
     nox_pm10_hc_epa_em_fac_impute = epa_tech_report_fac(path_nox_pm10_hc_epa_em_fac)
     em_fac_df_template = em_fac_template(
         all_pol_df=pol_df_fil, speciation_df=speciation_2020_fil
@@ -613,12 +638,18 @@ if __name__ == "__main__":
     speciation_2020_fil_expd = explode_speciation(
         speciation_2020_fil_=speciation_2020_fil
     )
+
+    pb_speciation_2011_expd = explode_speciation(
+        speciation_2020_fil_=pb_speciation_2011
+    )
     em_fac_res_dict["hap"] = hap_fac(
-        pm25_em_fac=em_fac_res_dict["pm25"],
-        voc_em_fac=em_fac_res_dict["voc"],
+        voc_pm25_em_fac_list=[em_fac_res_dict["pm25"], em_fac_res_dict["voc"]],
         speciation_2020_fil_expd_=speciation_2020_fil_expd,
     )
 
-    # Lead ?
+    em_fac_res_dict["pb"] = hap_fac(
+        voc_pm25_em_fac_list=[em_fac_res_dict["pm10"]],
+        speciation_2020_fil_expd_=pb_speciation_2011_expd,
+    )
     ghg_cap_hap_em_fac = pd.concat(em_fac_res_dict.values())
     ghg_cap_hap_em_fac.to_csv(path_emission_fac_out)
