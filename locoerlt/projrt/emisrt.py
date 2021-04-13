@@ -1,6 +1,8 @@
 """
 Develop emission rate table for expected list of pollutants.
 """
+import time
+import datetime
 import os
 import numpy as np
 import inflection
@@ -360,10 +362,10 @@ def epa_2009_proj_table_fac(
     pd.DataFrame
         Emission factors for 2011 to 2050 for the "pollutant" provided by the user.
     """
-    if pollutant not in ["NOX", "PM10", "PM25", "VOC"]:
-        raise ValueError(
-            "Function only handles the following pollutants: "
-            '"NOX", "PM10", "PM25", "VOC"'
+    if pollutant not in ["NOX", "PM10-PRI", "PM25-PRI", "VOC"]:
+        raise ValueError(f"Cannot handle pollutant {pollutant} "
+                         f"Function only handles the following pollutants: "
+                         f"NOX, PM10-PRI, PM25-PRI, VOC"
         )
     pol_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == pollutant]
     pol_em_fac_df_1 = (
@@ -540,6 +542,8 @@ def testing_missing_vals():
 
 
 if __name__ == "__main__":
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
     # Expected Pollutant List: NEI 2017-->Nonpoint-->Expected Pollutant List
     # for Nonpoint SCCs
     # https://www.epa.gov/air-emissions-inventories/2017-national-emissions
@@ -567,6 +571,10 @@ if __name__ == "__main__":
     path_nox_pm10_hc_epa_em_fac = os.path.join(
         PATH_INTERIM, "epa_emission_rates", "epa_2009_emission_rates_nox_pm10_hc.xlsx"
     )
+
+    # Final Output
+    path_emission_fac_out = os.path.join(PATH_INTERIM,
+                                         f"emission_factor_{st}.csv")
 
     pol_df_fil = expected_pol_list(path_exp_pol_list)
     speciation_2020_fil = hap_speciation_mult(path_hap_speciation)
@@ -613,3 +621,4 @@ if __name__ == "__main__":
 
     # Lead ?
     ghg_cap_hap_em_fac = pd.concat(em_fac_res_dict.values())
+    ghg_cap_hap_em_fac.to_csv(path_emission_fac_out)
