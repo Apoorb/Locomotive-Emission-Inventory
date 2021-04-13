@@ -119,19 +119,23 @@ def pb_speciation_builder(speciation_2020_fil_: pd.DataFrame) -> pd.DataFrame:
     Pollutant Speciation Profile for Locomotove Activities. ERG used 2011
     NEI speciation table.
     """
-    pb_template_df = speciation_2020_fil_.drop_duplicates([
-        'dat_cat_code', 'scc', 'scc_description_level_1',
-        'scc_description_level_2', 'scc_description_level_3',
-        'scc_description_level_4', 'sector_description'])
-    pb_speciation_df = (
-        pb_template_df
-        .assign(
-            input_pollutant_code='PM10-PRI',
-            input_pollutant_description='PM10 Primary (Filt + Cond)',
-            output_pollutant_code=7439921,
-            output_pollutant_description="Lead",
-            multiplication_factor=8.405e-05 # ERG report
-        )
+    pb_template_df = speciation_2020_fil_.drop_duplicates(
+        [
+            "dat_cat_code",
+            "scc",
+            "scc_description_level_1",
+            "scc_description_level_2",
+            "scc_description_level_3",
+            "scc_description_level_4",
+            "sector_description",
+        ]
+    )
+    pb_speciation_df = pb_template_df.assign(
+        input_pollutant_code="PM10-PRI",
+        input_pollutant_description="PM10 Primary (Filt + Cond)",
+        output_pollutant_code=7439921,
+        output_pollutant_description="Lead",
+        multiplication_factor=8.405e-05,  # ERG report
     )
     return pb_speciation_df
 
@@ -386,9 +390,10 @@ def epa_2009_proj_table_fac(
         Emission factors for 2011 to 2050 for the "pollutant" provided by the user.
     """
     if pollutant not in ["NOX", "PM10-PRI", "PM25-PRI", "VOC"]:
-        raise ValueError(f"Cannot handle pollutant {pollutant} "
-                         f"Function only handles the following pollutants: "
-                         f"NOX, PM10-PRI, PM25-PRI, VOC"
+        raise ValueError(
+            f"Cannot handle pollutant {pollutant} "
+            f"Function only handles the following pollutants: "
+            f"NOX, PM10-PRI, PM25-PRI, VOC"
         )
     pol_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == pollutant]
     pol_em_fac_df_1 = (
@@ -454,7 +459,7 @@ def explode_speciation(speciation_2020_fil_: pd.DataFrame) -> pd.DataFrame:
 def hap_fac(
     voc_pm25_em_fac_list: list[pd.DataFrame],
     speciation_2020_fil_expd_: pd.DataFrame,
-    pol_type='HAP'
+    pol_type="HAP",
 ) -> pd.DataFrame:
     """
     Get the emission rate for HAPs by using the PM 2.5 and VOC emission rates
@@ -597,8 +602,7 @@ if __name__ == "__main__":
     )
 
     # Final Output
-    path_emission_fac_out = os.path.join(PATH_INTERIM,
-                                         f"emission_factor_{st}.csv")
+    path_emission_fac_out = os.path.join(PATH_INTERIM, f"emission_factor_{st}.csv")
 
     pol_df_fil = expected_pol_list(path_exp_pol_list)
     speciation_2020_fil = hap_speciation_mult(path_hap_speciation)
@@ -650,7 +654,7 @@ if __name__ == "__main__":
     em_fac_res_dict["pb"] = hap_fac(
         voc_pm25_em_fac_list=[em_fac_res_dict["pm10"]],
         speciation_2020_fil_expd_=pb_speciation_2011_expd,
-        pol_type='CAP'
+        pol_type="CAP",
     )
     ghg_cap_hap_em_fac = pd.concat(em_fac_res_dict.values())
     ghg_cap_hap_em_fac.to_csv(path_emission_fac_out)
