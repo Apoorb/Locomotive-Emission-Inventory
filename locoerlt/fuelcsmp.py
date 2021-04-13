@@ -289,6 +289,8 @@ def get_fuel_consmp_by_cnty_carrier(
             txrail_milemx_cls3_comut_pasng_19.assign(county_pct=np.nan),
         ]
     )
+    txrail_milemx_cls_1_3_comut_pasng_19
+
     return txrail_milemx_cls_1_3_comut_pasng_19
 
 
@@ -352,6 +354,7 @@ if __name__ == "__main__":
         map_rrgrp_=map_rrgrp,
     )
 
+    txrail_milemx_cls_1_3_comut_pasng_19['year'] = 2019
     txrail_milemx_cls_1_3_comut_pasng_19.to_csv(path_or_buf=path_out_fuel_consump)
 
     # FixME: Testing code; Move to testing module.

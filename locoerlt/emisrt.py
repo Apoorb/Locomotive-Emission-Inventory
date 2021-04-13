@@ -518,7 +518,7 @@ def hap_fac(
         "em_fac",
     }
     hap_em_fac_df_2 = (
-        hap_em_fac_df_1.assign(pol_type="pol_type")
+        hap_em_fac_df_1.assign(pol_type=pol_type)
         .rename(
             columns={
                 "output_pollutant_code": "pollutant",
@@ -650,6 +650,7 @@ if __name__ == "__main__":
     em_fac_res_dict["pb"] = hap_fac(
         voc_pm25_em_fac_list=[em_fac_res_dict["pm10"]],
         speciation_2020_fil_expd_=pb_speciation_2011_expd,
+        pol_type='CAP'
     )
     ghg_cap_hap_em_fac = pd.concat(em_fac_res_dict.values())
     ghg_cap_hap_em_fac.to_csv(path_emission_fac_out)
