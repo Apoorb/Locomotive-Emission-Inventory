@@ -5,6 +5,38 @@ from io import StringIO
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED
 
 
+def process_proj_fac(
+        path_proj_fac_: str,
+        freight_sheet="freight_aeo_travel",
+        pass_commut_sheet="passenger_aeo_travel",
+        freight_rr_group=('Class I', 'Class III'),
+        pass_commut_rr_group=('Passenger', 'Commuter')
+) -> pd.DataFrame:
+    """
+    Return projection factors by railroad groups.
+    """
+    x1 = pd.ExcelFile(path_proj_fac_)
+    freight_proj_fac = x1.parse(freight_sheet)
+    pass_commute_proj_fac = x1.parse(pass_commut_sheet)
+    freight_proj_fac_1 = (
+        freight_proj_fac
+        .assign(
+            rr_group=[freight_rr_group] * len(freight_proj_fac)
+        )
+        .explode("rr_group")
+    )
+
+    pass_commute_proj_fac_1 = (
+        pass_commute_proj_fac
+        .assign(
+            rr_group=[pass_commut_rr_group] * len(pass_commute_proj_fac)
+        )
+        .explode("rr_group")
+    )
+    proj_fac_ = pd.concat([freight_proj_fac_1, pass_commute_proj_fac_1])
+    return proj_fac_
+
+
 def process_county(county_df_: pd.DataFrame) -> pd.DataFrame:
     """
     Use  "Texas County Boundary" dataset to get county five digit FIPS and
@@ -45,9 +77,9 @@ def project_filt_fuel_consump(
             year=[list(np.arange(2011, 2051))] * len(fuel_consump_),
         )
         .explode("year")
-        .merge(proj_fac_, on="year", how="outer")
+        .merge(proj_fac_, on=["rr_group", "year"], how="outer")
         .assign(
-            fuelconsump=lambda df: df.aeo_with_covid_travel_freight_proj_fac
+            fuelconsump=lambda df: df.proj_fac
             * df.netfuelconsump_2019,
             year=lambda df: df.year.astype(int),
         )
@@ -126,7 +158,7 @@ def get_emis_quant(
     """
     fuel_consump_ = pd.read_csv(path_fuel_consump_, index_col=0)
     emis_rt_ = pd.read_csv(path_emis_rt_, index_col=0)
-    proj_fac_ = pd.read_excel(path_proj_fac_)
+    proj_fac_ = process_proj_fac(path_proj_fac_)
     county_df_ = pd.read_csv(path_county_)
     county_df_fil_ = process_county(county_df_)
     fuel_consump_prj_ = project_filt_fuel_consump(fuel_consump_, proj_fac_)
@@ -154,9 +186,11 @@ if __name__ == "__main__":
 
     path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-13.csv")
     path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-13.csv")
-    path_proj_fac = os.path.join(PATH_INTERIM, "aeo_2021_travel_freight_proj_fac.xlsx")
+    path_proj_fac = os.path.join(PATH_INTERIM, "aeo_2021_proj_fac.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
     path_out_emisquant = os.path.join(PATH_PROCESSED, "emis_quant_loco.csv")
+
+    fuel_consump = pd.read_csv(path_fuel_consump, index_col=0)
 
     emis_quant = get_emis_quant(
         path_fuel_consump_=path_fuel_consump,
