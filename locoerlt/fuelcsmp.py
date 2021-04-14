@@ -98,8 +98,8 @@ def preprc_fuelusg(path_fueluserail2019_: str) -> pd.DataFrame:
     fueluserail2019 = pd.read_csv(path_fueluserail2019_)
     fueluse_col_map = {
         "RRCarrier": "carrier",
-        "LineHaul": "totfuelconsump_Fcat",
-        "Yard": "totfuelconsump_IYcat",
+        "LineHaul": "st_fuel_consmp_Fcat",
+        "Yard": "st_fuel_consmp_IYcat",
     }
     fueluserail2019_preprc = pd.wide_to_long(
         df=(
@@ -107,7 +107,7 @@ def preprc_fuelusg(path_fueluserail2019_: str) -> pd.DataFrame:
                 fueluse_col_map.values()
             )
         ),
-        stubnames="totfuelconsump",
+        stubnames="st_fuel_consmp",
         i="carrier",
         j="friylab",
         sep="_",
@@ -120,7 +120,7 @@ def get_class_1_fuel_consump(
     fueluse2019_preprc_: pd.DataFrame,
     strail_2020_preprocess_: pd.DataFrame,
     path_cls1_cntpct_: str,
-    cls1_carriers=("BNSF", "KCS", "UP"),
+    cls1_carriers_=("BNSF", "KCS", "UP"),
 ) -> pd.DataFrame:
     """
     Split the 2019 statewide fuel usage to county by county fuel usage.
@@ -139,16 +139,16 @@ def get_class_1_fuel_consump(
         Class 1 (BNSF, KCS, and UP) fuel usage by county and individual link.
     """
     cls1_cntpct = pd.read_csv(path_cls1_cntpct_)
-    cls1_cntpct["carrier"] = [cls1_carriers] * len(cls1_cntpct)
+    cls1_cntpct["carrier"] = [cls1_carriers_] * len(cls1_cntpct)
     cls1_cntpct_prc = cls1_cntpct.explode("carrier")
     fueluse2019_preprc_cls1_ = (
-        fueluse2019_preprc_.loc[lambda df: df.carrier.isin(list(cls1_carriers))]
+        fueluse2019_preprc_.loc[lambda df: df.carrier.isin(list(cls1_carriers_))]
         .merge(cls1_cntpct_prc, on="carrier", how="inner")
         .rename(
             columns={col: inflection.underscore(col) for col in cls1_cntpct_prc.columns}
         )
         .assign(
-            cnty_cls1_fuel_consmp=lambda df: df.totfuelconsump * df.county_pct,
+            cnty_cls1_fuel_consmp=lambda df: df.st_fuel_consmp * df.county_pct,
             stcntyfips=lambda df: df.fips.astype(int),
         )
         .drop(columns="fips")
@@ -157,7 +157,7 @@ def get_class_1_fuel_consump(
     def get_county_mimix(strail_2020_preprocess__=strail_2020_preprocess_):
         """Get the county level milemix by carrier."""
         strail_2020_preprocess__1 = strail_2020_preprocess__.loc[
-            lambda df: df.carrier.isin(list(cls1_carriers))
+            lambda df: df.carrier.isin(list(cls1_carriers_))
         ].assign(
             stcntyfips=lambda df: df.stcntyfips.astype(int),
             totnetmiles=lambda df: df.groupby(
@@ -178,13 +178,13 @@ def get_class_1_fuel_consump(
 
     fueluse2019_preprc_cls1_milemx = strail_2020_preprocess_1.merge(
         fueluse2019_preprc_cls1_, on=["stcntyfips", "carrier", "friylab"], how="left"
-    ).assign(netfuelconsump=lambda df: df.milemx * df.totfuelconsump)
+    ).assign(link_fuel_consmp=lambda df: df.milemx * df.cnty_cls1_fuel_consmp)
 
-    assert fueluse2019_preprc_cls1_milemx.netfuelconsump.isna().sum() == 0, (
+    assert fueluse2019_preprc_cls1_milemx.link_fuel_consmp.isna().sum() == 0, (
         "County fuel distribution data has counties with a distribution "
         "value, whereas the national rail data has no rail miles in that "
-        "county. Do more testing on the two dataset to figure out why this is "
-        "happening. "
+        "county. Do more testing on the two dataset to figure out "
+        "discrepancies between the two. "
     )
 
     return fueluse2019_preprc_cls1_milemx
@@ -193,7 +193,7 @@ def get_class_1_fuel_consump(
 def get_class_3_passenger_commuter_fuel_consump(
     fueluse2019_preprc_: pd.DataFrame,
     strail_2020_preprocess_: pd.DataFrame,
-    cls1_carriers=("BNSF", "KCS", "UP"),
+    cls1_carriers_=("BNSF", "KCS", "UP"),
 ) -> pd.DataFrame:
     """
     Use the national rail data to distribute the fuel consumption across
@@ -213,9 +213,9 @@ def get_class_3_passenger_commuter_fuel_consump(
     """
 
     fueluse2019_preprc_cls3_comut_pasng_milemx = (
-        strail_2020_preprocess_.loc[lambda df: ~df.carrier.isin(list(cls1_carriers))]
+        strail_2020_preprocess_.loc[lambda df: ~df.carrier.isin(list(cls1_carriers_))]
         .merge(fueluse2019_preprc_, on=["carrier", "friylab"], how="left")
-        .loc[lambda df: ~df.totfuelconsump.isna()]
+        .loc[lambda df: ~df.st_fuel_consmp.isna()]
         # Removes DART's industrial and Yard rows. They have null fuel
         # consumption.
         .assign(
@@ -223,7 +223,7 @@ def get_class_3_passenger_commuter_fuel_consump(
                 sum
             ),
             milemx=lambda df: df.miles / df.totnetmiles,
-            netfuelconsump=lambda df: df.milemx * df.totfuelconsump,
+            link_fuel_consmp=lambda df: df.milemx * df.st_fuel_consmp,
         )
         .reset_index(drop=True)
     )
@@ -236,6 +236,8 @@ def get_fuel_consmp_by_cnty_carrier(
     path_fueluserail2019_: str,
     path_cls1_cntpct_: str,
     map_rrgrp_: dict,
+    cls1_carriers_=("BNSF", "KCS", "UP"),
+    filter_st=("TX",)
 ) -> pd.DataFrame:
     """
     Use statewide fuel usage, proportion of fuel usage by county and national
@@ -259,6 +261,10 @@ def get_fuel_consmp_by_cnty_carrier(
         Rail carrier with tag: Class 1, 3, Commuter, or Passenger
     path_natrail2020_
         Path to national rail dataset.
+    cls1_carriers_
+        Class 1 carriers in Texas.
+    filter_st:
+        Filter state: Texas for this study.
 
     Returns
     -------
@@ -270,18 +276,19 @@ def get_fuel_consmp_by_cnty_carrier(
         path_natrail2020_=path_natrail2020_,
         path_rail_carrier_grp_=path_rail_carrier_grp_,
         map_rrgrp_=map_rrgrp_,
+        filter_st=filter_st,
     )
     fueluse2019_preprc = preprc_fuelusg(path_fueluserail2019_=path_fueluserail2019_)
     txrail_milemx_cls1_19 = get_class_1_fuel_consump(
         fueluse2019_preprc_=fueluse2019_preprc,
         strail_2020_preprocess_=txrail_2020_preprs,
         path_cls1_cntpct_=path_cls1_cntpct_,
-        cls1_carriers=cls1_carriers,
+        cls1_carriers_=cls1_carriers_,
     )
     txrail_milemx_cls3_comut_pasng_19 = get_class_3_passenger_commuter_fuel_consump(
         fueluse2019_preprc_=fueluse2019_preprc,
         strail_2020_preprocess_=txrail_2020_preprs,
-        cls1_carriers=cls1_carriers,
+        cls1_carriers_=cls1_carriers_,
     )
     txrail_milemx_cls_1_3_comut_pasng_19 = pd.concat(
         [
@@ -337,13 +344,13 @@ if __name__ == "__main__":
         fueluse2019_preprc_=fueluse2019_preprc,
         strail_2020_preprocess_=txrail_2020_preprs,
         path_cls1_cntpct_=path_cls1_cntpct,
-        cls1_carriers=cls1_carriers,
+        cls1_carriers_=cls1_carriers,
     )
 
     txrail_milemx_cls3_comut_pasng_19 = get_class_3_passenger_commuter_fuel_consump(
         fueluse2019_preprc_=fueluse2019_preprc,
         strail_2020_preprocess_=txrail_2020_preprs,
-        cls1_carriers=cls1_carriers,
+        cls1_carriers_=cls1_carriers,
     )
 
     txrail_milemx_cls_1_3_comut_pasng_19 = get_fuel_consmp_by_cnty_carrier(
@@ -356,74 +363,3 @@ if __name__ == "__main__":
 
     txrail_milemx_cls_1_3_comut_pasng_19["year"] = 2019
     txrail_milemx_cls_1_3_comut_pasng_19.to_csv(path_or_buf=path_out_fuel_consump)
-
-    # FixME: Testing code; Move to testing module.
-    txrail_2020_milemx_cls3_comut_pasng_comp = (
-        txrail_milemx_cls3_comut_pasng_19.filter(
-            items=[
-                "objectid",
-                "miles",
-                "rr_netgrp",
-                "carrier",
-                "rr_group",
-                "totfuelconsump",
-                "totnetmiles",
-                "milemx",
-                "netfuelconsump",
-            ]
-        )
-        .sort_values(by=["carrier", "rr_netgrp", "objectid"])
-        .reset_index(drop=True)
-    )
-
-    fuelconsump_sql_mar5_comp = (
-        fuelconsump_sql_mar5.rename(
-            columns={
-                col: inflection.underscore(col) for col in fuelconsump_sql_mar5.columns
-            }
-        )
-        .rename(
-            columns={
-                "rr_netgroup": "rr_netgrp",
-                "rr_carrier": "carrier",
-                "rr_tot_netmiles": "totnetmiles",
-                "rr_net_milemix": "milemx",
-                "rr_tot_fuel_consump": "totfuelconsump",
-                "rr_net_fuel_consump": "netfuelconsump",
-                "shape_leng": "shape_st_len",
-            }
-        )
-        .loc[lambda df: ~df.carrier.isin(list(cls1_carriers))]
-        .loc[
-            lambda df: (df.carrier != "DART")
-            | ((df.carrier == "DART") & (df.stcntyfips == 48121))
-        ]
-        .assign(
-            totfuelconsump=lambda df: df.totfuelconsump.astype(float),
-            totnetmiles=lambda df: df.totnetmiles.astype(float),
-            milemx=lambda df: df.milemx.astype(float),
-            netfuelconsump=lambda df: df.netfuelconsump.astype(float),
-        )
-        .filter(
-            items=[
-                "objectid",
-                "miles",
-                "rr_netgrp",
-                "carrier",
-                "rr_group",
-                "totfuelconsump",
-                "totnetmiles",
-                "milemx",
-                "netfuelconsump",
-            ]
-        )
-        .sort_values(by=["carrier", "rr_netgrp", "objectid"])
-        .reset_index(drop=True)
-    )
-
-    pd.testing.assert_frame_equal(
-        txrail_2020_milemx_cls3_comut_pasng_comp, fuelconsump_sql_mar5_comp
-    ), (
-        "There is error in the processing. The SQL and python data should be "
-        "the same."
-    )
