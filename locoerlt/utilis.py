@@ -56,8 +56,7 @@ def get_out_file_tsmp():
     return st
 
 
-def cleanup_prev_output(
-        dir_filenm_pat: os.path) -> None:
+def cleanup_prev_output(dir_filenm_pat: os.path) -> None:
     """
     Delete all files with pattern `filenm_pat` from directory `dir`
     """
@@ -72,7 +71,7 @@ def read_shapefile(path_shp_file):
     column holding the geometry information. This uses the pyshp
     package
     """
-    sf = shapefile.Reader(path_shp_file, encoding='Shift-JIS')
+    sf = shapefile.Reader(path_shp_file, encoding="Shift-JIS")
     fields = [x[0] for x in sf.fields][1:]
     records = [y[:] for y in sf.records()]
     # shps = [s.points for s in sf.shapes()]
@@ -83,4 +82,5 @@ def read_shapefile(path_shp_file):
 
 if __name__ == "__main__":
     path_natrail2020 = os.path.join(
-        PATH_RAW, "North_American_Rail_Lines", "North_American_Rail_Lines.shp")
+        PATH_RAW, "North_American_Rail_Lines", "North_American_Rail_Lines.shp"
+    )

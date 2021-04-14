@@ -172,8 +172,7 @@ def get_emis_quant(
 
 
 if __name__ == "__main__":
-    path_fuel_consump = os.path.join(PATH_INTERIM,
-                                     "fuelconsump_2019_tx_2021-04-14.csv")
+    path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-14.csv")
     path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-13.csv")
     path_proj_fac = os.path.join(PATH_INTERIM, "aeo_2021_proj_fac.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
