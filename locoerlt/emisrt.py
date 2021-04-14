@@ -7,7 +7,9 @@ import os
 import numpy as np
 import inflection
 import pandas as pd
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED
+from locoerlt.utilis import (
+    PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_out_file_tsmp,
+    cleanup_prev_output)
 
 
 def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
@@ -551,28 +553,8 @@ def hap_fac(
     return hap_em_fac_df_2
 
 
-def testing_missing_vals():
-    # FixMe
-    # Testing
-    ###########################################################################
-    # Pollutants needed based on expected pollutant list and not in
-    # speciation table and vice-versa.
-    # FixMe: Write HAP Speciation vs. List of Expected Pollutants
-    pol_df_fil_speciation = pol_df_fil.merge(
-        speciation_2020_fil.loc[lambda df: df.multiplication_factor != 0],
-        left_on=["pollutant", "scc"],
-        right_on=["output_pollutant_code", "scc"],
-        how="outer",
-    ).loc[
-        lambda df: ~df.pollutant.isin(
-            ["CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
-        )
-    ]
-
-
 if __name__ == "__main__":
-    ts = time.time()
-    st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+    st = get_out_file_tsmp()
     # Expected Pollutant List: NEI 2017-->Nonpoint-->Expected Pollutant List
     # for Nonpoint SCCs
     # https://www.epa.gov/air-emissions-inventories/2017-national-emissions
@@ -603,6 +585,10 @@ if __name__ == "__main__":
 
     # Final Output
     path_emission_fac_out = os.path.join(PATH_INTERIM, f"emission_factor_{st}.csv")
+    path_emission_fac_out_pat = os.path.join(
+        PATH_INTERIM, r"emission_factor_*-*-*.csv"
+    )
+    cleanup_prev_output(path_emission_fac_out_pat)
 
     pol_df_fil = expected_pol_list(path_exp_pol_list)
     speciation_2020_fil = hap_speciation_mult(path_hap_speciation)
