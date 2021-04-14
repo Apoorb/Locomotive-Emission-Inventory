@@ -2,22 +2,30 @@ import os
 import pandas as pd
 import numpy as np
 from io import StringIO
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED
+from locoerlt.utilis import (
+    PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_out_file_tsmp,
+    cleanup_prev_output)
 
 
 def process_proj_fac(
     path_proj_fac_: str,
-    freight_sheet="freight_aeo_travel",
-    pass_commut_sheet="passenger_aeo_travel",
     freight_rr_group=("Class I", "Class III"),
     pass_commut_rr_group=("Passenger", "Commuter"),
 ) -> pd.DataFrame:
     """
+    Use R-1 projection factors (actual data from 2011 to 2020. Use AEO 2021
+    travel projection factors from 2021 onwards.
+
     Return projection factors by railroad groups.
     """
     x1 = pd.ExcelFile(path_proj_fac_)
-    freight_proj_fac = x1.parse(freight_sheet)
-    pass_commute_proj_fac = x1.parse(pass_commut_sheet)
+    freight_proj_fac = (
+        x1.parse("Recommended_Proj", skiprows=1, usecols=['Year', 'Freight'])
+        .rename(columns={"Year": "year", "Freight": "proj_fac"}))
+    pass_commute_proj_fac = (
+        x1.parse("Recommended_Proj", skiprows=1, usecols=['Year', 'Passenger'])
+        .rename(columns={"Year": "year", "Passenger": "proj_fac"}))
+
     freight_proj_fac_1 = freight_proj_fac.assign(
         rr_group=[freight_rr_group] * len(freight_proj_fac)
     ).explode("rr_group")
@@ -172,11 +180,20 @@ def get_emis_quant(
 
 
 if __name__ == "__main__":
+    st = get_out_file_tsmp()
+    path_out_fuel_consump = os.path.join(PATH_INTERIM, f"fuelconsump_2019_tx_{st}.csv")
+    path_out_fuel_consump_pat = os.path.join(
+        PATH_INTERIM, r"fuelconsump_2019_tx_*-*-*.csv"
+    )
     path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-14.csv")
-    path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-13.csv")
-    path_proj_fac = os.path.join(PATH_INTERIM, "aeo_2021_proj_fac.xlsx")
+    path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-14.csv")
+    path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
-    path_out_emisquant = os.path.join(PATH_PROCESSED, "emis_quant_loco.csv")
+    path_out_emisquant = os.path.join(PATH_PROCESSED,
+                                      f"emis_quant_loco_{st}.csv")
+    path_out_emisquant_pat = os.path.join(PATH_PROCESSED,
+                                          f"emis_quant_loco_*-*-*.csv")
+    cleanup_prev_output(path_out_emisquant_pat)
 
     fuel_consump = pd.read_csv(path_fuel_consump, index_col=0)
 
