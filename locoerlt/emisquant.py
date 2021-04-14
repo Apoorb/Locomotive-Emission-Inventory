@@ -55,17 +55,17 @@ def project_filt_fuel_consump(
                 "friylab",
                 "rr_netgrp",
                 "rr_group",
-                "netfuelconsump",
+                "link_fuel_consmp",
             ]
         )
-        .rename(columns={"netfuelconsump": "netfuelconsump_2019"})
+        .rename(columns={"link_fuel_consmp": "link_fuel_consmp_2019"})
         .assign(
             year=[list(np.arange(2011, 2051))] * len(fuel_consump_),
         )
         .explode("year")
         .merge(proj_fac_, on=["rr_group", "year"], how="outer")
         .assign(
-            fuelconsump=lambda df: df.proj_fac * df.netfuelconsump_2019,
+            link_fuel_consmp_by_yr=lambda df: df.proj_fac * df.link_fuel_consmp_2019,
             year=lambda df: df.year.astype(int),
         )
     )
@@ -80,10 +80,10 @@ def assert_proj_fuel_merge(fuel_consump_prj_):
     assert ~fuel_consump_prj_.isna().any().any(), "Check dataframe for nan"
     assert (
         fuel_consump_prj_.loc[lambda df: df.year == 2019]
-        .eval("netfuelconsump_2019 == fuelconsump")
+        .eval("link_fuel_consmp_2019 == link_fuel_consmp_by_yr")
         .all()
     ), (
-        "netfuelconsump_2019 should be equal to fuelconsump as we are using "
+        "link_fuel_consmp_2019 should be equal to link_fuel_consmp_by_yr as we are using "
         "2019 fuel data. Check the projection factors and make sure they are "
         "normalized to 2019 value."
     )
@@ -99,7 +99,7 @@ def merge_cnty_nm_to_fuel_proj(
         fuel_consump_prj_.groupby(
             ["year", "stcntyfips", "carrier", "friylab", "rr_netgrp", "rr_group"]
         )
-        .agg(fuelconsump=("fuelconsump", "sum"))
+        .agg(link_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"))
         .reset_index()
         .merge(county_df_fil_, on="stcntyfips", how="outer")
     )
@@ -163,7 +163,7 @@ def get_emis_quant(
             how="outer",
         )
         .assign(
-            em_quant=lambda df: df.em_fac * df.fuelconsump,
+            em_quant=lambda df: df.em_fac * df.link_fuel_consmp_by_yr,
             year=lambda df: df.year.astype("Int32"),
         )
         .drop(columns=["anals_yr", "em_units", "friylab"])
@@ -172,8 +172,8 @@ def get_emis_quant(
 
 
 if __name__ == "__main__":
-
-    path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-13.csv")
+    path_fuel_consump = os.path.join(PATH_INTERIM,
+                                     "fuelconsump_2019_tx_2021-04-14.csv")
     path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-13.csv")
     path_proj_fac = os.path.join(PATH_INTERIM, "aeo_2021_proj_fac.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
