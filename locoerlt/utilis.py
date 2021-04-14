@@ -1,7 +1,13 @@
 import sys
+import re
 from pathlib import Path
 import os
+import glob
 import mariadb
+import time
+import datetime
+import pandas as pd
+import shapefile
 from dotenv import find_dotenv, load_dotenv
 
 
@@ -43,5 +49,38 @@ def connect_to_server_db(database_nm, user_nm="root"):
     return conn_
 
 
+def get_out_file_tsmp():
+    """Get the date timestamp for file output."""
+    ts = time.time()
+    st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+    return st
+
+
+def cleanup_prev_output(
+        dir_filenm_pat: os.path) -> None:
+    """
+    Delete all files with pattern `filenm_pat` from directory `dir`
+    """
+    for file in glob.glob(dir_filenm_pat):
+        os.remove(file)
+        print(f"Deleting file: {file}")
+
+
+def read_shapefile(path_shp_file):
+    """
+    Read a shapefile into a Pandas dataframe with a 'coords'
+    column holding the geometry information. This uses the pyshp
+    package
+    """
+    sf = shapefile.Reader(path_shp_file, encoding='Shift-JIS')
+    fields = [x[0] for x in sf.fields][1:]
+    records = [y[:] for y in sf.records()]
+    # shps = [s.points for s in sf.shapes()]
+    df = pd.DataFrame(columns=fields, data=records)
+    # df = df.assign(coords=shps)
+    return df
+
+
 if __name__ == "__main__":
-    ...
+    path_natrail2020 = os.path.join(
+        PATH_RAW, "North_American_Rail_Lines", "North_American_Rail_Lines.shp")

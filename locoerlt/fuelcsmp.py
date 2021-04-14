@@ -3,12 +3,12 @@ Get the fuel consumption by Class 1, 3, Amtrak, DART, and TREX.
 """
 
 import os
-import time
-import datetime
 import inflection
 import pandas as pd
 import numpy as np
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM
+from locoerlt.utilis import (
+    PATH_RAW, PATH_INTERIM, get_out_file_tsmp, cleanup_prev_output,
+    read_shapefile)
 
 
 def preprc_link(
@@ -51,7 +51,7 @@ def preprc_link(
     pd.DataFrame
         Processed national rail dataset.
     """
-    natrail2020 = pd.read_csv(path_natrail2020_)
+    natrail2020 = read_shapefile(path_natrail2020_)
     rail_carrier_grp = pd.read_csv(path_rail_carrier_grp_, index_col=0)
     natrail2020_1 = natrail2020.rename(
         columns={col: inflection.underscore(col) for col in natrail2020.columns}
@@ -304,8 +304,7 @@ def get_fuel_consmp_by_cnty_carrier(
 if __name__ == "__main__":
     # Define common variables
     cls1_carriers = ("BNSF", "KCS", "UP")
-    ts = time.time()
-    st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%d")
+    st = get_out_file_tsmp()
     map_rrgrp = {
         "M": "Freight",  # Main sub network
         "I": "Freight",  # Major Industrial Lead
@@ -321,12 +320,16 @@ if __name__ == "__main__":
     }
 
     # Define paths
-    path_natrail2020 = os.path.join(PATH_RAW, "NatRail_2020.csv")
+    path_natrail2020 = os.path.join(
+        PATH_RAW, "North_American_Rail_Lines", "North_American_Rail_Lines.shp")
     path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
     path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
     path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")
     path_sql_df = os.path.join(PATH_INTERIM, "testing", "fuelCompOutMar5.csv")
     path_out_fuel_consump = os.path.join(PATH_INTERIM, f"fuelconsump_2019_tx_{st}.csv")
+    path_out_fuel_consump_pat = os.path.join(
+        PATH_INTERIM, r"fuelconsump_2019_tx_*-*-*.csv")
+    cleanup_prev_output(path_out_fuel_consump_pat)
     # Read Datasets
     fuelconsump_sql_mar5 = pd.read_csv(path_sql_df)
     # https://proceedings.esri.com/library/userconf/proc15/papers/402_174.pdf

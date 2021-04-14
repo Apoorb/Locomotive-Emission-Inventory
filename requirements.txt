@@ -18,3 +18,4 @@ inflection
 xlrd
 openpyxl
 pytest
+pyshp
