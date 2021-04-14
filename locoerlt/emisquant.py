@@ -6,11 +6,11 @@ from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED
 
 
 def process_proj_fac(
-        path_proj_fac_: str,
-        freight_sheet="freight_aeo_travel",
-        pass_commut_sheet="passenger_aeo_travel",
-        freight_rr_group=('Class I', 'Class III'),
-        pass_commut_rr_group=('Passenger', 'Commuter')
+    path_proj_fac_: str,
+    freight_sheet="freight_aeo_travel",
+    pass_commut_sheet="passenger_aeo_travel",
+    freight_rr_group=("Class I", "Class III"),
+    pass_commut_rr_group=("Passenger", "Commuter"),
 ) -> pd.DataFrame:
     """
     Return projection factors by railroad groups.
@@ -18,21 +18,13 @@ def process_proj_fac(
     x1 = pd.ExcelFile(path_proj_fac_)
     freight_proj_fac = x1.parse(freight_sheet)
     pass_commute_proj_fac = x1.parse(pass_commut_sheet)
-    freight_proj_fac_1 = (
-        freight_proj_fac
-        .assign(
-            rr_group=[freight_rr_group] * len(freight_proj_fac)
-        )
-        .explode("rr_group")
-    )
+    freight_proj_fac_1 = freight_proj_fac.assign(
+        rr_group=[freight_rr_group] * len(freight_proj_fac)
+    ).explode("rr_group")
 
-    pass_commute_proj_fac_1 = (
-        pass_commute_proj_fac
-        .assign(
-            rr_group=[pass_commut_rr_group] * len(pass_commute_proj_fac)
-        )
-        .explode("rr_group")
-    )
+    pass_commute_proj_fac_1 = pass_commute_proj_fac.assign(
+        rr_group=[pass_commut_rr_group] * len(pass_commute_proj_fac)
+    ).explode("rr_group")
     proj_fac_ = pd.concat([freight_proj_fac_1, pass_commute_proj_fac_1])
     return proj_fac_
 
@@ -43,24 +35,18 @@ def process_county(county_df_: pd.DataFrame) -> pd.DataFrame:
     county name map. Source:
     https://gis-txdot.opendata.arcgis.com/datasets/texas-county-boundaries/data?geometry=-133.426%2C24.483%2C-66.673%2C37.611
     """
-    county_df_fil_ = (
-        county_df_
-        .filter(
-            items=["CNTY_NM", "FIPS_ST_CNTY_CD"])
-        .rename(
-            columns={"CNTY_NM": "county_name", "FIPS_ST_CNTY_CD": "stcntyfips"}
-        )
+    county_df_fil_ = county_df_.filter(items=["CNTY_NM", "FIPS_ST_CNTY_CD"]).rename(
+        columns={"CNTY_NM": "county_name", "FIPS_ST_CNTY_CD": "stcntyfips"}
     )
     return county_df_fil_
 
 
 def project_filt_fuel_consump(
-        fuel_consump_: pd.DataFrame, proj_fac_: pd.DataFrame) -> pd.DataFrame:
+    fuel_consump_: pd.DataFrame, proj_fac_: pd.DataFrame
+) -> pd.DataFrame:
     """
     Filter fuel consumption dataset and merge the projection factors to it.
     """
-    # FixME: Projection Factors for Class I, III, and Yard would be different
-    #  from passenger and commuter. Fix this.
     fuel_consump_prj_ = (
         fuel_consump_.filter(
             items=[
@@ -79,8 +65,7 @@ def project_filt_fuel_consump(
         .explode("year")
         .merge(proj_fac_, on=["rr_group", "year"], how="outer")
         .assign(
-            fuelconsump=lambda df: df.proj_fac
-            * df.netfuelconsump_2019,
+            fuelconsump=lambda df: df.proj_fac * df.netfuelconsump_2019,
             year=lambda df: df.year.astype(int),
         )
     )
@@ -95,8 +80,8 @@ def assert_proj_fuel_merge(fuel_consump_prj_):
     assert ~fuel_consump_prj_.isna().any().any(), "Check dataframe for nan"
     assert (
         fuel_consump_prj_.loc[lambda df: df.year == 2019]
-            .eval("netfuelconsump_2019 == fuelconsump")
-            .all()
+        .eval("netfuelconsump_2019 == fuelconsump")
+        .all()
     ), (
         "netfuelconsump_2019 should be equal to fuelconsump as we are using "
         "2019 fuel data. Check the projection factors and make sure they are "
@@ -104,8 +89,9 @@ def assert_proj_fuel_merge(fuel_consump_prj_):
     )
 
 
-def merge_cnty_nm_to_fuel_proj(fuel_consump_prj_: pd.DataFrame,
-                               county_df_fil_: pd.DataFrame) -> pd.DataFrame:
+def merge_cnty_nm_to_fuel_proj(
+    fuel_consump_prj_: pd.DataFrame, county_df_fil_: pd.DataFrame
+) -> pd.DataFrame:
     """
     Add county names to the fuel consumption dataset.
     """
@@ -121,7 +107,8 @@ def merge_cnty_nm_to_fuel_proj(fuel_consump_prj_: pd.DataFrame,
 
 
 def add_scc_desc_to_fuel_proj_cnty(
-        fuel_consump_prj_by_cnty_: pd.DataFrame) -> pd.DataFrame:
+    fuel_consump_prj_by_cnty_: pd.DataFrame,
+) -> pd.DataFrame:
     """
     Add EPA SCC description to fuel consumption + county name + Projection data.
     """
@@ -163,9 +150,11 @@ def get_emis_quant(
     county_df_fil_ = process_county(county_df_)
     fuel_consump_prj_ = project_filt_fuel_consump(fuel_consump_, proj_fac_)
     fuel_consump_prj_by_cnty_ = merge_cnty_nm_to_fuel_proj(
-        fuel_consump_prj_, county_df_fil_)
+        fuel_consump_prj_, county_df_fil_
+    )
     fuel_consump_prj_by_cnty_scc_ = add_scc_desc_to_fuel_proj_cnty(
-        fuel_consump_prj_by_cnty_)
+        fuel_consump_prj_by_cnty_
+    )
     emis_quant_ = (
         fuel_consump_prj_by_cnty_scc_.merge(
             emis_rt_,
