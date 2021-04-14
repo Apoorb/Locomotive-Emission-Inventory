@@ -1,5 +1,5 @@
 """
-Tests fuelc.
+Tests fuelcsmp module.
 """
 import os
 import pytest
@@ -9,8 +9,7 @@ import numpy as np
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM
 from locoerlt.fuelcsmp import (
     get_fuel_consmp_by_cnty_carrier,
-    preprc_link,
-    preprc_fuelusg,
+    preprc_fuelusg
 )
 
 
