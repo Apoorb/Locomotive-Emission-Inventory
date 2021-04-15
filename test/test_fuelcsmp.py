@@ -27,8 +27,11 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
-path_natrail2020 = os.path.join(
-    PATH_RAW, "North_American_Rail_Lines", "North_American_Rail_Lines.shp"
+path_natrail2020_csv = os.path.join(
+    PATH_INTERIM, "North_American_Rail_Lines.csv"
+)
+path_natrail2020_old = os.path.join(
+    PATH_RAW, "archive", "NatRail_2020.csv"
 )
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
 path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
@@ -42,9 +45,9 @@ def fueluserail2019_input_df():
 
 
 @pytest.fixture()
-def get_cls1_cls3_comm_passg_py_df():
+def get_cls1_cls3_comm_passg_py_df(request):
     txrail_milemx_cls_1_3_comut_pasng_19 = get_fuel_consmp_by_cnty_carrier(
-        path_natrail2020_=path_natrail2020,
+        path_natrail2020_=request.param,
         path_rail_carrier_grp_=path_rail_carrier_grp,
         path_fueluserail2019_=path_fueluserail2019,
         path_cls1_cntpct_=path_cls1_cntpct,
@@ -62,7 +65,7 @@ def get_county_cls1_prop_py_cd(get_cls1_cls3_comm_passg_py_df):
         .agg(
             totnetmiles=("totnetmiles", "mean"),
             milemx=("milemx", "sum"),
-            st_fuel_consmp=("st_fuel_consmp", "mean"), # FixMe: This does get
+            st_fuel_consmp=("cnty_cls1_fuel_consmp", "sum"),
             # the actual value of the state fuel consumption from the data.
             cnty_cls1_fuel_consmp=("cnty_cls1_fuel_consmp", "mean"),
             link_fuel_consmp=("link_fuel_consmp", "sum"),
@@ -164,12 +167,11 @@ def get_carrier_df():
     return rail_carrier_grp
 
 
-def test_py_and_sql_data_eq_for_cls3_pass_commut(
-    get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df
-):
-    pd.testing.assert_frame_equal(get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df)
-
-
+@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
+                         [path_natrail2020_old, path_natrail2020_csv],
+                         ids=["2020 NatRail Data", "2021 NatRail Data"],
+                         indirect=True
+                         )
 def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df):
     carriers_py_cd = (
         get_cls1_cls3_comm_passg_py_df.groupby(["carrier", "rr_group"])[
@@ -185,7 +187,28 @@ def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df)
     get_carrier_df_srt = get_carrier_df.sort_values(
         ["rr_group", "carrier"]
     ).reset_index(drop=True)
+
+    missing_carriers = (set.difference(set(get_carrier_df_srt.carrier),
+                    set(carriers_py_cd.carrier)))
+    print(
+        "Following carriers (if any) are missing from the NatRail data: "
+        f"{missing_carriers}"
+    )
     pd.testing.assert_frame_equal(carriers_py_cd, get_carrier_df_srt)
+
+
+def test_py_and_sql_data_eq_for_cls3_pass_commut(
+    get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df
+):
+    pd.testing.assert_frame_equal(get_cls3_comm_passg_py_df,
+                                  get_cls3_comm_passg_sql_df)
+
+    test = pd.merge(get_cls3_comm_passg_py_df,
+                                  get_cls3_comm_passg_sql_df,
+                                  on=["carrier", "rr_netgrp"],
+                                  how="outer")
+
+    get_cls3_comm_passg_sql_df.merge(get_cls3_comm_passg_py_df)
 
 
 def test_milemx_cls1_grp_cnty_1_oth_carrier_grp_st_1(get_cls1_cls3_comm_passg_py_df):
