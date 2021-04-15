@@ -152,6 +152,9 @@ def get_class_1_fuel_consump(
             columns={col: inflection.underscore(col) for col in cls1_cntpct_prc.columns}
         )
         .assign(
+            # FixMe: There are some missing counties in NatRail data that are
+            #  getting implicitly removed. This cause the total Texas wide
+            #  fuel consumption to become lower than what it actually is.
             cnty_cls1_fuel_consmp=lambda df: df.st_fuel_consmp * df.county_pct,
             stcntyfips=lambda df: df.fips.astype(int),
         )

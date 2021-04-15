@@ -58,6 +58,10 @@ def project_filt_fuel_consump(
     fuel_consump_prj_ = (
         fuel_consump_.filter(
             items=[
+                'fraarcid',
+                'yardname',
+                'net',
+                'miles',
                 "stcntyfips",
                 "carrier",
                 "friylab",
@@ -77,24 +81,7 @@ def project_filt_fuel_consump(
             year=lambda df: df.year.astype(int),
         )
     )
-    assert_proj_fuel_merge(fuel_consump_prj_)
     return fuel_consump_prj_
-
-
-def assert_proj_fuel_merge(fuel_consump_prj_):
-    """
-    Test if the fuel consumption and project factor merge was successful.
-    """
-    assert ~fuel_consump_prj_.isna().any().any(), "Check dataframe for nan"
-    assert (
-        fuel_consump_prj_.loc[lambda df: df.year == 2019]
-        .eval("link_fuel_consmp_2019 == link_fuel_consmp_by_yr")
-        .all()
-    ), (
-        "link_fuel_consmp_2019 should be equal to link_fuel_consmp_by_yr as we are using "
-        "2019 fuel data. Check the projection factors and make sure they are "
-        "normalized to 2019 value."
-    )
 
 
 def merge_cnty_nm_to_fuel_proj(
@@ -104,10 +91,21 @@ def merge_cnty_nm_to_fuel_proj(
     Add county names to the fuel consumption dataset.
     """
     fuel_consump_prj_by_cnty_ = (
-        fuel_consump_prj_.groupby(
-            ["year", "stcntyfips", "carrier", "friylab", "rr_netgrp", "rr_group"]
+        fuel_consump_prj_
+        .assign(yardname_axb=lambda df: np.select(
+            [(df.rr_netgrp != "Freight") & (~ df.yardname.isna()),
+             (df.rr_netgrp != "Freight") & (df.yardname.isna()),
+             df.rr_netgrp == "Freight"],
+            [df.yardname,
+             -99,
+             -99],
+            -9999)
         )
-        .agg(link_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"))
+        .groupby(
+            ["year", "stcntyfips", "carrier", "friylab", "yardname_axb",
+             "rr_netgrp", "rr_group"]
+        )
+        .agg(county_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"))
         .reset_index()
         .merge(county_df_fil_, on="stcntyfips", how="outer")
     )
@@ -171,20 +169,16 @@ def get_emis_quant(
             how="outer",
         )
         .assign(
-            em_quant=lambda df: df.em_fac * df.link_fuel_consmp_by_yr,
+            em_quant=lambda df: df.em_fac * df.county_fuel_consmp_by_yr,
             year=lambda df: df.year.astype("Int32"),
         )
-        .drop(columns=["anals_yr", "em_units", "friylab"])
+        .drop(columns=["anals_yr", "em_units"])
     )
     return emis_quant_
 
 
 if __name__ == "__main__":
     st = get_out_file_tsmp()
-    path_out_fuel_consump = os.path.join(PATH_INTERIM, f"fuelconsump_2019_tx_{st}.csv")
-    path_out_fuel_consump_pat = os.path.join(
-        PATH_INTERIM, r"fuelconsump_2019_tx_*-*-*.csv"
-    )
     path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-14.csv")
     path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-14.csv")
     path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")

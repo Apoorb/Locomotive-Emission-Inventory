@@ -27,7 +27,9 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
-path_natrail2020 = os.path.join(PATH_RAW, "NatRail_2020.csv")
+path_natrail2020 = os.path.join(
+    PATH_RAW, "North_American_Rail_Lines", "North_American_Rail_Lines.shp"
+)
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
 path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
 path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")
@@ -60,7 +62,8 @@ def get_county_cls1_prop_py_cd(get_cls1_cls3_comm_passg_py_df):
         .agg(
             totnetmiles=("totnetmiles", "mean"),
             milemx=("milemx", "sum"),
-            st_fuel_consmp=("st_fuel_consmp", "mean"),
+            st_fuel_consmp=("st_fuel_consmp", "mean"), # FixMe: This does get
+            # the actual value of the state fuel consumption from the data.
             cnty_cls1_fuel_consmp=("cnty_cls1_fuel_consmp", "mean"),
             link_fuel_consmp=("link_fuel_consmp", "sum"),
             county_pct=("county_pct", "mean"),
