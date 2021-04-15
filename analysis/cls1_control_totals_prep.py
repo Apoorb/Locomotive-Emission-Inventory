@@ -44,58 +44,53 @@ txrail_2020_preprs = preprc_link(
 )
 
 txrail_2020_preprs_cls1 = (
-    txrail_2020_preprs.loc[lambda df: (
-        (df.carrier.isin(["BNSF", "KCS", "UP"])) & (df.friylab == "Fcat"))]
-    .groupby(["carrier", "stcntyfips"]).agg(Natrail2020=("carrier", "first"))
+    txrail_2020_preprs.loc[
+        lambda df: ((df.carrier.isin(["BNSF", "KCS", "UP"])) & (df.friylab == "Fcat"))
+    ]
+    .groupby(["carrier", "stcntyfips"])
+    .agg(Natrail2020=("carrier", "first"))
     .reset_index()
-    .assign(Natrail2020=1,
-            stcntyfips=lambda df: df.stcntyfips.astype("int64"))
+    .assign(Natrail2020=1, stcntyfips=lambda df: df.stcntyfips.astype("int64"))
     .rename(columns={"stcntyfips": "FIPS_natrail"})
 )
 
 txrail_2020_preprs_cls1_pivot = (
-    txrail_2020_preprs_cls1
-    .pivot_table(index="FIPS_natrail", columns="carrier").reset_index()
+    txrail_2020_preprs_cls1.pivot_table(index="FIPS_natrail", columns="carrier")
+    .reset_index()
     .droplevel(level=0, axis=1)
     .fillna(0)
     .rename(columns={"": "FIPS"})
 )
 
-cls1_carriers=["BNSF", "KCS", "UP"]
+cls1_carriers = ["BNSF", "KCS", "UP"]
 
-fueluse2019_preprc_fr = (
-    fueluse2019_preprc.loc[lambda df: (df.friylab == "Fcat")
-                                      & (df.carrier.isin(cls1_carriers))
-    ]
-    .assign(
-        st_fuel_consmp_all_cls1=lambda df: df.st_fuel_consmp.sum(),
-        cls1_st_fuel_ratio=lambda df: df.st_fuel_consmp / df.st_fuel_consmp_all_cls1
-    )
+fueluse2019_preprc_fr = fueluse2019_preprc.loc[
+    lambda df: (df.friylab == "Fcat") & (df.carrier.isin(cls1_carriers))
+].assign(
+    st_fuel_consmp_all_cls1=lambda df: df.st_fuel_consmp.sum(),
+    cls1_st_fuel_ratio=lambda df: df.st_fuel_consmp / df.st_fuel_consmp_all_cls1,
 )
 
-cls1_fuel_freight_state = (fueluse2019_preprc_fr[["carrier", "st_fuel_consmp"]]
- .set_index("carrier").T
- .reset_index(drop=True)
- )
+cls1_fuel_freight_state = (
+    fueluse2019_preprc_fr[["carrier", "st_fuel_consmp"]]
+    .set_index("carrier")
+    .T.reset_index(drop=True)
+)
 
-st_fuel_consmp_all_cls1 = (
-    fueluse2019_preprc_fr.st_fuel_consmp_all_cls1.values[0])
+st_fuel_consmp_all_cls1 = fueluse2019_preprc_fr.st_fuel_consmp_all_cls1.values[0]
 
 
-test_miss_nat_cnttot_cls1_fr =(
-    txrail_2020_preprs_cls1_pivot
-    .merge(cls1_cntpct, on=["FIPS"], how="outer")
+test_miss_nat_cnttot_cls1_fr = (
+    txrail_2020_preprs_cls1_pivot.merge(cls1_cntpct, on=["FIPS"], how="outer")
     .assign(st_fuel_consmp_all_cls1=st_fuel_consmp_all_cls1)
-    .assign(cnty_fuel_consmp_all_cls1=lambda df: st_fuel_consmp_all_cls1
-                                                 * df.CountyPCT)
+    .assign(cnty_fuel_consmp_all_cls1=lambda df: st_fuel_consmp_all_cls1 * df.CountyPCT)
 )
 
 test_miss_nat_cnttot_cls1_fr_1 = pd.concat(
     [test_miss_nat_cnttot_cls1_fr, cls1_fuel_freight_state]
 )
 
-path_out_debug = os.path.join(PATH_INTERIM, "debug",
-                              "txrail_2020_preprs_cls1_pivot_fuel.xlsx")
+path_out_debug = os.path.join(
+    PATH_INTERIM, "debug", "txrail_2020_preprs_cls1_pivot_fuel.xlsx"
+)
 test_miss_nat_cnttot_cls1_fr_1.to_excel(path_out_debug)
-
-

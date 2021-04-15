@@ -8,8 +8,12 @@ import numpy as np
 import inflection
 import pandas as pd
 from locoerlt.utilis import (
-    PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_out_file_tsmp,
-    cleanup_prev_output)
+    PATH_RAW,
+    PATH_INTERIM,
+    PATH_PROCESSED,
+    get_out_file_tsmp,
+    cleanup_prev_output,
+)
 
 
 def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
@@ -585,9 +589,7 @@ if __name__ == "__main__":
 
     # Final Output
     path_emission_fac_out = os.path.join(PATH_INTERIM, f"emission_factor_{st}.csv")
-    path_emission_fac_out_pat = os.path.join(
-        PATH_INTERIM, r"emission_factor_*-*-*.csv"
-    )
+    path_emission_fac_out_pat = os.path.join(PATH_INTERIM, r"emission_factor_*-*-*.csv")
     cleanup_prev_output(path_emission_fac_out_pat)
 
     pol_df_fil = expected_pol_list(path_exp_pol_list)

@@ -7,10 +7,7 @@ import inflection
 import pandas as pd
 import numpy as np
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM
-from locoerlt.fuelcsmp import (
-    get_fuel_consmp_by_cnty_carrier,
-    preprc_fuelusg
-)
+from locoerlt.fuelcsmp import get_fuel_consmp_by_cnty_carrier, preprc_fuelusg
 
 
 cls1_carriers = ("BNSF", "KCS", "UP")
@@ -27,12 +24,8 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
-path_natrail2020_csv = os.path.join(
-    PATH_INTERIM, "North_American_Rail_Lines.csv"
-)
-path_natrail2020_old = os.path.join(
-    PATH_RAW, "archive", "NatRail_2020.csv"
-)
+path_natrail2020_csv = os.path.join(PATH_INTERIM, "North_American_Rail_Lines.csv")
+path_natrail2020_old = os.path.join(PATH_RAW, "archive", "NatRail_2020.csv")
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
 path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
 path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")
@@ -60,8 +53,9 @@ def get_cls1_cls3_comm_passg_py_df(request):
 @pytest.fixture()
 def get_county_cls1_freight_prop_py_cd(get_cls1_cls3_comm_passg_py_df):
     county_cls1_freight_prop_py_cd = (
-        get_cls1_cls3_comm_passg_py_df
-        .loc[lambda df: (df.rr_group == "Class I") & (df.friylab == "Fcat")]
+        get_cls1_cls3_comm_passg_py_df.loc[
+            lambda df: (df.rr_group == "Class I") & (df.friylab == "Fcat")
+        ]
         .groupby(["stcntyfips", "carrier", "friylab"])
         .agg(
             totnetmiles=("totnetmiles", "mean"),
@@ -79,16 +73,15 @@ def get_county_cls1_freight_prop_py_cd(get_cls1_cls3_comm_passg_py_df):
         * county_cls1_freight_prop_py_cd.cnty_fuel_consmp_all_cls1
     )
 
-    county_cls1_freight_prop_py_cd_1 = (
-        county_cls1_freight_prop_py_cd
-        .assign(
-            st_fuel_consmp_by_cls1_estimated=lambda df: (
-                df.groupby(["carrier", "friylab"])["cnty_fuel_consmp_by_cls1"]
-                .transform(sum)),
-            st_fuel_consmp_all_cls1_estimated= lambda df: (
-                df.groupby(["friylab"])["cnty_fuel_consmp_by_cls1"]
-                .transform(sum))
+    county_cls1_freight_prop_py_cd_1 = county_cls1_freight_prop_py_cd.assign(
+        st_fuel_consmp_by_cls1_estimated=lambda df: (
+            df.groupby(["carrier", "friylab"])["cnty_fuel_consmp_by_cls1"].transform(
+                sum
             )
+        ),
+        st_fuel_consmp_all_cls1_estimated=lambda df: (
+            df.groupby(["friylab"])["cnty_fuel_consmp_by_cls1"].transform(sum)
+        ),
     )
 
     return county_cls1_freight_prop_py_cd_1
@@ -185,11 +178,12 @@ def get_carrier_df():
     return rail_carrier_grp
 
 
-@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
-                         [path_natrail2020_old, path_natrail2020_csv],
-                         ids=["2020 NatRail Data", "2021 NatRail Data"],
-                         indirect=True
-                         )
+@pytest.mark.parametrize(
+    "get_cls1_cls3_comm_passg_py_df",
+    [path_natrail2020_old, path_natrail2020_csv],
+    ids=["2020 NatRail Data", "2021 NatRail Data"],
+    indirect=True,
+)
 def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df):
     carriers_py_cd = (
         get_cls1_cls3_comm_passg_py_df.groupby(["carrier", "rr_group"])[
@@ -206,8 +200,9 @@ def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df)
         ["rr_group", "carrier"]
     ).reset_index(drop=True)
 
-    missing_carriers = (set.difference(set(get_carrier_df_srt.carrier),
-                    set(carriers_py_cd.carrier)))
+    missing_carriers = set.difference(
+        set(get_carrier_df_srt.carrier), set(carriers_py_cd.carrier)
+    )
     print(
         "Following carriers (if any) are missing from the NatRail data: "
         f"{missing_carriers}"
@@ -215,33 +210,36 @@ def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df)
     pd.testing.assert_frame_equal(carriers_py_cd, get_carrier_df_srt)
 
 
-@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
-                         [path_natrail2020_old, path_natrail2020_csv],
-                         ids=["2020 NatRail Data", "2021 NatRail Data"],
-                         indirect=True
-                         )
+@pytest.mark.parametrize(
+    "get_cls1_cls3_comm_passg_py_df",
+    [path_natrail2020_old, path_natrail2020_csv],
+    ids=["2020 NatRail Data", "2021 NatRail Data"],
+    indirect=True,
+)
 def test_py_and_sql_data_eq_for_cls3_pass_commut(
     get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df
 ):
-    test = pd.merge(get_cls3_comm_passg_py_df,
-                                  get_cls3_comm_passg_sql_df,
-                                  on=["carrier", "rr_netgrp"],
-                                  how="outer")
-    pd.testing.assert_frame_equal(get_cls3_comm_passg_py_df,
-                                  get_cls3_comm_passg_sql_df)
+    test = pd.merge(
+        get_cls3_comm_passg_py_df,
+        get_cls3_comm_passg_sql_df,
+        on=["carrier", "rr_netgrp"],
+        how="outer",
+    )
+    pd.testing.assert_frame_equal(get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df)
 
 
-
-@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
-                         [path_natrail2020_csv],
-                         ids=["2021 NatRail Data"],
-                         indirect=True
-                         )
+@pytest.mark.parametrize(
+    "get_cls1_cls3_comm_passg_py_df",
+    [path_natrail2020_csv],
+    ids=["2021 NatRail Data"],
+    indirect=True,
+)
 def test_milemx_cls1_grp_cnty_1_oth_carrier_grp_st_1(get_cls1_cls3_comm_passg_py_df):
     is_cls1_milemx_cnty_1 = np.allclose(
         (
-            get_cls1_cls3_comm_passg_py_df.loc[lambda df:
-            (df.rr_group == "Class I") & (df.friylab == "Fcat")]
+            get_cls1_cls3_comm_passg_py_df.loc[
+                lambda df: (df.rr_group == "Class I") & (df.friylab == "Fcat")
+            ]
             .groupby(["friylab", "stcntyfips"])
             .milemx.sum()
             .values
@@ -250,9 +248,10 @@ def test_milemx_cls1_grp_cnty_1_oth_carrier_grp_st_1(get_cls1_cls3_comm_passg_py
     )
     is_notcls1freight_milemx_st_1 = np.allclose(
         (
-            get_cls1_cls3_comm_passg_py_df.loc[lambda df:
-            (df.rr_group != "Class I")
-            | ((df.rr_group != "Class I") & (df.friylab != "IYcat"))]
+            get_cls1_cls3_comm_passg_py_df.loc[
+                lambda df: (df.rr_group != "Class I")
+                | ((df.rr_group != "Class I") & (df.friylab != "IYcat"))
+            ]
             .groupby(["carrier", "friylab"])
             .milemx.sum()
             .values
@@ -262,20 +261,20 @@ def test_milemx_cls1_grp_cnty_1_oth_carrier_grp_st_1(get_cls1_cls3_comm_passg_py
     assert is_cls1_milemx_cnty_1 & is_notcls1freight_milemx_st_1
 
 
-@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
-                         [path_natrail2020_csv],
-                         ids=["2021 NatRail Data"],
-                         indirect=True
-                         )
+@pytest.mark.parametrize(
+    "get_cls1_cls3_comm_passg_py_df",
+    [path_natrail2020_csv],
+    ids=["2021 NatRail Data"],
+    indirect=True,
+)
 def test_county_all_cls1_prop_cnt_tots(
-        get_county_cls1_freight_prop_py_cd, get_county_cls1_prop_input
+    get_county_cls1_freight_prop_py_cd, get_county_cls1_prop_input
 ):
     county_all_cls1_prop_py_cd_prcsd = (
-        get_county_cls1_freight_prop_py_cd
-        .assign(
+        get_county_cls1_freight_prop_py_cd.assign(
             county_pct_estimated=lambda df: (
-                df.cnty_fuel_consmp_all_cls1
-                / df.st_fuel_consmp_all_cls1_estimated)
+                df.cnty_fuel_consmp_all_cls1 / df.st_fuel_consmp_all_cls1_estimated
+            )
         )
         .groupby("stcntyfips")
         .agg(CountyPCT=("county_pct_estimated", "mean"))
@@ -288,36 +287,37 @@ def test_county_all_cls1_prop_cnt_tots(
     )
 
 
-@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
-                         [path_natrail2020_csv],
-                         ids=["2021 NatRail Data"],
-                         indirect=True
-                         )
-def test_county_all_cls1_state_tots(
-    get_county_cls1_freight_prop_py_cd):
+@pytest.mark.parametrize(
+    "get_cls1_cls3_comm_passg_py_df",
+    [path_natrail2020_csv],
+    ids=["2021 NatRail Data"],
+    indirect=True,
+)
+def test_county_all_cls1_state_tots(get_county_cls1_freight_prop_py_cd):
     # TODO: Use TransCAD or some other software to allocate fuel to different
     #  counties and class 1 carriers, such that the recomputed fuel for each
     #  carrier at state level matches the observed data.
-    st_estimated = (
-        get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1_estimated)
-    st_observed_data = (
-        get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1)
+    st_estimated = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1_estimated
+    st_observed_data = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1
     assert np.allclose(st_estimated, st_observed_data)
 
 
-@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
-                         [path_natrail2020_csv],
-                         ids=["2021 NatRail Data"],
-                         indirect=True
-                         )
+@pytest.mark.parametrize(
+    "get_cls1_cls3_comm_passg_py_df",
+    [path_natrail2020_csv],
+    ids=["2021 NatRail Data"],
+    indirect=True,
+)
 def test_county_all_cls1_state_tots_using_fuel_data(
-        get_county_cls1_freight_prop_py_cd, fueluserail2019_input_df
+    get_county_cls1_freight_prop_py_cd, fueluserail2019_input_df
 ):
     # TODO: Use TransCAD or some other software to allocate fuel to different
     #  counties and class 1 carriers, such that the recomputed fuel for each
     #  carrier at state level matches the observed data.
     cls1_st_totals_input_df = pd.merge(
-        get_county_cls1_freight_prop_py_cd, fueluserail2019_input_df, on=["carrier", "friylab"]
+        get_county_cls1_freight_prop_py_cd,
+        fueluserail2019_input_df,
+        on=["carrier", "friylab"],
     )
     is_cls1_input_fuel_eq_st_fuel_estimated = np.allclose(
         cls1_st_totals_input_df.st_fuel_consmp_by_cls1_estimated,
@@ -327,17 +327,15 @@ def test_county_all_cls1_state_tots_using_fuel_data(
         cls1_st_totals_input_df.st_fuel_consmp_by_cls1,
         cls1_st_totals_input_df.st_fuel_consmp,
     )
-    assert (
-        is_cls1_input_fuel_eq_st_fuel_estimated
-        & is_cls1_input_fuel_eq_st_fuel_data
-    )
+    assert is_cls1_input_fuel_eq_st_fuel_estimated & is_cls1_input_fuel_eq_st_fuel_data
 
 
-@pytest.mark.parametrize("get_cls1_cls3_comm_passg_py_df",
-                         [path_natrail2020_csv],
-                         ids=["2021 NatRail Data"],
-                         indirect=True
-                         )
+@pytest.mark.parametrize(
+    "get_cls1_cls3_comm_passg_py_df",
+    [path_natrail2020_csv],
+    ids=["2021 NatRail Data"],
+    indirect=True,
+)
 def test_notcls1_fuel_consump_tots_by_st(
     get_cls3_comm_passg_py_df, fueluserail2019_input_df
 ):

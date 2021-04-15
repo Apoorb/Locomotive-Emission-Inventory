@@ -3,8 +3,12 @@ import pandas as pd
 import numpy as np
 from io import StringIO
 from locoerlt.utilis import (
-    PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_out_file_tsmp,
-    cleanup_prev_output)
+    PATH_RAW,
+    PATH_INTERIM,
+    PATH_PROCESSED,
+    get_out_file_tsmp,
+    cleanup_prev_output,
+)
 
 
 def process_proj_fac(
@@ -19,12 +23,12 @@ def process_proj_fac(
     Return projection factors by railroad groups.
     """
     x1 = pd.ExcelFile(path_proj_fac_)
-    freight_proj_fac = (
-        x1.parse("Recommended_Proj", skiprows=1, usecols=['Year', 'Freight'])
-        .rename(columns={"Year": "year", "Freight": "proj_fac"}))
-    pass_commute_proj_fac = (
-        x1.parse("Recommended_Proj", skiprows=1, usecols=['Year', 'Passenger'])
-        .rename(columns={"Year": "year", "Passenger": "proj_fac"}))
+    freight_proj_fac = x1.parse(
+        "Recommended_Proj", skiprows=1, usecols=["Year", "Freight"]
+    ).rename(columns={"Year": "year", "Freight": "proj_fac"})
+    pass_commute_proj_fac = x1.parse(
+        "Recommended_Proj", skiprows=1, usecols=["Year", "Passenger"]
+    ).rename(columns={"Year": "year", "Passenger": "proj_fac"})
 
     freight_proj_fac_1 = freight_proj_fac.assign(
         rr_group=[freight_rr_group] * len(freight_proj_fac)
@@ -58,10 +62,10 @@ def project_filt_fuel_consump(
     fuel_consump_prj_ = (
         fuel_consump_.filter(
             items=[
-                'fraarcid',
-                'yardname',
-                'net',
-                'miles',
+                "fraarcid",
+                "yardname",
+                "net",
+                "miles",
                 "stcntyfips",
                 "carrier",
                 "friylab",
@@ -91,19 +95,27 @@ def merge_cnty_nm_to_fuel_proj(
     Add county names to the fuel consumption dataset.
     """
     fuel_consump_prj_by_cnty_ = (
-        fuel_consump_prj_
-        .assign(yardname_axb=lambda df: np.select(
-            [(df.rr_netgrp != "Freight") & (~ df.yardname.isna()),
-             (df.rr_netgrp != "Freight") & (df.yardname.isna()),
-             df.rr_netgrp == "Freight"],
-            [df.yardname,
-             -99,
-             -99],
-            -9999)
+        fuel_consump_prj_.assign(
+            yardname_axb=lambda df: np.select(
+                [
+                    (df.rr_netgrp != "Freight") & (~df.yardname.isna()),
+                    (df.rr_netgrp != "Freight") & (df.yardname.isna()),
+                    df.rr_netgrp == "Freight",
+                ],
+                [df.yardname, -99, -99],
+                -9999,
+            )
         )
         .groupby(
-            ["year", "stcntyfips", "carrier", "friylab", "yardname_axb",
-             "rr_netgrp", "rr_group"]
+            [
+                "year",
+                "stcntyfips",
+                "carrier",
+                "friylab",
+                "yardname_axb",
+                "rr_netgrp",
+                "rr_group",
+            ]
         )
         .agg(county_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"))
         .reset_index()
@@ -183,10 +195,8 @@ if __name__ == "__main__":
     path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-14.csv")
     path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
-    path_out_emisquant = os.path.join(PATH_PROCESSED,
-                                      f"emis_quant_loco_{st}.csv")
-    path_out_emisquant_pat = os.path.join(PATH_PROCESSED,
-                                          f"emis_quant_loco_*-*-*.csv")
+    path_out_emisquant = os.path.join(PATH_PROCESSED, f"emis_quant_loco_{st}.csv")
+    path_out_emisquant_pat = os.path.join(PATH_PROCESSED, f"emis_quant_loco_*-*-*.csv")
     cleanup_prev_output(path_out_emisquant_pat)
 
     fuel_consump = pd.read_csv(path_fuel_consump, index_col=0)
