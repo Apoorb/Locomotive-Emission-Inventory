@@ -198,7 +198,7 @@ def test_hap_speciation(get_out_emis_fac, hap_speciation):
     assert np.allclose(test_df.em_fac_y, test_df.em_fac_x)
 
 
-def test_hap_speciation(get_out_emis_fac):
+def test_lead_speciation(get_out_emis_fac):
     pm10_fac = (
         get_out_emis_fac.loc[lambda df: (df.pollutant.isin(["PM10-PRI"]))]
         .filter(items=["anals_yr", "pollutant", "scc_description_level_4", "em_fac"])
@@ -225,7 +225,10 @@ def test_all_year_pollutant_scc_present(get_out_emis_fac):
         anals_yr=lambda df: pd.Categorical(df.anals_yr),
         pollutant=lambda df: pd.Categorical(df.pollutant),
     )
-    is_1_value_in_all_grp_ = all(
-        get_out_emis_fac.groupby(["scc", "anals_yr", "pollutant"]).count() == 1
+    is_1_value_in_all_grp_ = all(np.ravel(
+        get_out_emis_fac_1
+        .groupby(["scc", "anals_yr", "pollutant"]).count(
+            ).values)
+        == 1
     )
     assert is_1_value_in_all_grp_
