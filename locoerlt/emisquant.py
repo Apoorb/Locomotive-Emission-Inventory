@@ -117,7 +117,7 @@ def merge_cnty_nm_to_fuel_proj(
                 "rr_group",
             ]
         )
-        .agg(county_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"))
+        .agg(county_carr_friy_yardnm_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"))
         .reset_index()
         .merge(county_df_fil_, on="stcntyfips", how="outer")
     )
@@ -156,7 +156,7 @@ def get_emis_quant(
     path_emis_rt_: str,
     path_proj_fac_: str,
     path_county_: str,
-) -> pd.DataFrame:
+) -> dict:
     """
     Get the emission quantity using the fuel consumption, emission rates,
     projection factors, and county name datasets.
@@ -181,30 +181,54 @@ def get_emis_quant(
             how="outer",
         )
         .assign(
-            em_quant=lambda df: df.em_fac * df.county_fuel_consmp_by_yr,
+            em_quant=lambda df: df.em_fac * df.county_carr_friy_yardnm_fuel_consmp_by_yr,
             year=lambda df: df.year.astype("Int32"),
         )
         .drop(columns=["anals_yr", "em_units"])
     )
-    return emis_quant_
+
+    emis_quant_agg = (
+        emis_quant_
+        .groupby(['year', 'stcntyfips', 'county_name', 'dat_cat_code',
+                  'sector_description',
+                  'scc_description_level_1',
+                  'scc_description_level_2',
+                  'scc_description_level_3', 'scc',
+                  'scc_description_level_4', 'yardname_axb', 'pol_type',
+                  'pollutant', 'pol_desc'])
+        .agg(
+            em_fac=("em_fac", "mean"),
+            em_quant=("em_quant", "sum"),
+            county_carr_friy_yardnm_fuel_consmp_by_yr=(
+                "county_carr_friy_yardnm_fuel_consmp_by_yr", "sum")
+        )
+        .reset_index()
+    )
+
+    return {"emis_quant": emis_quant_, "emis_quant_agg": emis_quant_agg}
 
 
 if __name__ == "__main__":
     st = get_out_file_tsmp()
-    path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-14.csv")
+    path_fuel_consump = os.path.join(PATH_INTERIM,
+                                     "fuelconsump_2019_tx_2021-04-16.csv")
     path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-14.csv")
     path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
     path_out_emisquant = os.path.join(PATH_PROCESSED, f"emis_quant_loco_{st}.csv")
+    path_out_emisquant_agg = os.path.join(PATH_PROCESSED, f"emis_quant_loco_agg"
+                                                       f"_{st}.csv")
+
     path_out_emisquant_pat = os.path.join(PATH_PROCESSED, f"emis_quant_loco_*-*-*.csv")
     cleanup_prev_output(path_out_emisquant_pat)
 
     fuel_consump = pd.read_csv(path_fuel_consump, index_col=0)
 
-    emis_quant = get_emis_quant(
+    emis_quant_res = get_emis_quant(
         path_fuel_consump_=path_fuel_consump,
         path_emis_rt_=path_emis_rt,
         path_proj_fac_=path_proj_fac,
         path_county_=path_county,
     )
-    emis_quant.to_csv(path_out_emisquant)
+    emis_quant_res["emis_quant"].to_csv(path_out_emisquant)
+    emis_quant_res["emis_quant_agg"].to_csv(path_out_emisquant_agg)
