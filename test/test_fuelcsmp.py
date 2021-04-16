@@ -169,29 +169,26 @@ def get_cls3_comm_passg_sql_df(request):
         .sort_values(by=["carrier", "rr_netgrp", "objectid"])
         .reset_index(drop=True)
     )
-    filter_out_carriers =request.param
-    fuelconsump_sql_mar5_comp_fil = (
-        fuelconsump_sql_mar5_comp
-        .loc[lambda df: ~ df.carrier.isin(filter_out_carriers)]
-    )
+    filter_out_carriers = request.param
+    fuelconsump_sql_mar5_comp_fil = fuelconsump_sql_mar5_comp.loc[
+        lambda df: ~df.carrier.isin(filter_out_carriers)
+    ]
     return fuelconsump_sql_mar5_comp_fil
 
 
 @pytest.fixture()
 def get_carrier_df(request):
-    filter_out_carriers =request.param
+    filter_out_carriers = request.param
     rail_carrier_grp = pd.read_csv(path_rail_carrier_grp, index_col=0)
-    rail_carrier_grp_fil = (
-        rail_carrier_grp
-        .loc[lambda df: ~ df.carrier.isin(filter_out_carriers)]
-    )
+    rail_carrier_grp_fil = rail_carrier_grp.loc[
+        lambda df: ~df.carrier.isin(filter_out_carriers)
+    ]
     return rail_carrier_grp_fil
 
 
 @pytest.mark.parametrize(
     "get_cls1_cls3_comm_passg_py_df, get_carrier_df",
-    [(path_natrail2020_old, ("",)),
-     (path_natrail2020_csv, ('TNMR', 'WTLC', 'TSE'))],
+    [(path_natrail2020_old, ("",)), (path_natrail2020_csv, ("TNMR", "WTLC", "TSE"))],
     ids=["2020 NatRail Data", "2021 NatRail Data"],
     indirect=True,
 )
@@ -224,8 +221,7 @@ def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df)
 
 @pytest.mark.parametrize(
     "get_cls1_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df",
-    [(path_natrail2020_old, ("",)),
-     (path_natrail2020_csv, ('TNMR', 'WTLC', 'TSE'))],
+    [(path_natrail2020_old, ("",)), (path_natrail2020_csv, ("TNMR", "WTLC", "TSE"))],
     ids=["2020 NatRail Data", "2021 NatRail Data"],
     indirect=True,
 )

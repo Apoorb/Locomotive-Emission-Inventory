@@ -225,10 +225,10 @@ def test_all_year_pollutant_scc_present(get_out_emis_fac):
         anals_yr=lambda df: pd.Categorical(df.anals_yr),
         pollutant=lambda df: pd.Categorical(df.pollutant),
     )
-    is_1_value_in_all_grp_ = all(np.ravel(
-        get_out_emis_fac_1
-        .groupby(["scc", "anals_yr", "pollutant"]).count(
-            ).values)
+    is_1_value_in_all_grp_ = all(
+        np.ravel(
+            get_out_emis_fac_1.groupby(["scc", "anals_yr", "pollutant"]).count().values
+        )
         == 1
     )
     assert is_1_value_in_all_grp_
