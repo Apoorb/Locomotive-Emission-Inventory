@@ -194,15 +194,6 @@ def get_class_1_freight_fuel_consump(
             .mean()
             == 1
         )
-        # test_df = (
-        #     strail_2020_preprocess__1.groupby(["stcntyfips", "carrier"])
-        #     .agg(
-        #         milemx=("milemx", 'sum'),
-        #         totnetmiles=("totnetmiles", "mean"),
-        #         miles=("miles", "sum")
-        #     )
-        #     .unstack()
-        # )
         return strail_2020_preprocess__1
 
     strail_2020_preprocess_1 = get_county_mimix()
