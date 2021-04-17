@@ -102,7 +102,7 @@ def merge_cnty_nm_to_fuel_proj(
                     (df.rr_netgrp != "Freight") & (df.yardname.isna()),
                     df.rr_netgrp == "Freight",
                 ],
-                [df.yardname, -99, -99],
+                [df.yardname, "noname", -99],
                 -9999,
             )
         )
@@ -118,8 +118,11 @@ def merge_cnty_nm_to_fuel_proj(
             ]
         )
         .agg(
-            county_carr_friy_yardnm_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum")
-        )
+            county_carr_friy_yardnm_fuel_consmp_by_yr=(
+                "link_fuel_consmp_by_yr", "sum"),
+            county_carr_friy_yardnm_miles_by_yr=("miles", "sum")
+
+    )
         .reset_index()
         .merge(county_df_fil_, on="stcntyfips", how="outer")
     )
@@ -216,6 +219,9 @@ def get_emis_quant(
                 "county_carr_friy_yardnm_fuel_consmp_by_yr",
                 "sum",
             ),
+            county_carr_friy_yardnm_miles_by_yr=(
+                "county_carr_friy_yardnm_miles_by_yr", "sum"
+            )
         )
         .reset_index()
     )
@@ -226,7 +232,7 @@ def get_emis_quant(
 if __name__ == "__main__":
     st = get_out_file_tsmp()
     path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-16.csv")
-    path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-14.csv")
+    path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-16.csv")
     path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
     path_out_emisquant = os.path.join(PATH_PROCESSED, f"emis_quant_loco_{st}.csv")

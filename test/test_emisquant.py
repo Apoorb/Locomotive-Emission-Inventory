@@ -8,8 +8,22 @@ import pandas as pd
 import numpy as np
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_out_file_tsmp
 from locoerlt.emisquant import process_proj_fac
-from locoerlt.fuelcsmp import preprc_fuelusg
+from locoerlt.fuelcsmp import preprc_fuelusg, preprc_link
 from test.test_emisrt import get_nox_pm10_pm25_voc_epa_em_fac, hap_speciation
+
+map_rrgrp = {
+    "M": "Freight",  # Main sub network
+    "I": "Freight",  # Major Industrial Lead
+    "S": "Freight",  # Passing sidings over 4000 feet long
+    "O": "Industrial",  # Other track (minor industrial leads)
+    "Y": "Yard",  # Yard Switching
+    "Z": "Transit",  # Transit-only rail line or museum/tourist operation
+    "R": "Other",  # Abandoned line that has been physically removed
+    "A": "Other",  # Abandoned rail line
+    "X": "Other",  # Out of service line
+    "F": "Other",  # Rail ferry connection
+    "T": "Other",  # Trail on former rail right-of-way
+}
 
 st = get_out_file_tsmp()
 path_emisquant = os.path.join(PATH_PROCESSED, f"emis_quant_loco_{st}.csv")
@@ -18,6 +32,18 @@ path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
 path_fuel_consump = os.path.join(PATH_INTERIM, f"fuelconsump_2019_tx_{st}.csv")
 path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
+path_natrail2020_csv = os.path.join(PATH_INTERIM,
+                                    "North_American_Rail_Lines.csv")
+path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")
+
+
+@pytest.fixture()
+def get_prc_nat_rail():
+    return preprc_link(
+        path_natrail2020_=path_natrail2020_csv,
+        path_rail_carrier_grp_=path_rail_carrier_grp,
+        map_rrgrp_=map_rrgrp,
+    )
 
 
 @pytest.fixture()
@@ -51,6 +77,39 @@ def get_county_cls1_prop_input():
     return cls1_cntpct
 
 
+def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
+    scc_friylab_map = {
+        "Line Haul Locomotives: Class I Operations": "Fcat",
+        "Line Haul Locomotives: Class II / III Operations": "Fcat",
+        "Yard Locomotives": "IYcat",
+        "Line Haul Locomotives: Passenger Trains (Amtrak)": "Fcat",
+        "Line Haul Locomotives: Commuter Lines": "Fcat",
+    }
+    county_carr_miles = (
+        get_emis_quant
+        .groupby(["year", "stcntyfips", "carrier", "scc_description_level_4", "pollutant"])
+        .agg(county_carr_friy_mi=("county_carr_friy_yardnm_miles_by_yr", "sum"))
+        .reset_index()
+        .assign(friylab=lambda df: df.scc_description_level_4.map(scc_friylab_map))
+    )
+
+    # TREX somehow has yard fuel consumption. For reporting it should likely
+    # to freight.
+    get_prc_nat_rail.loc[lambda df: df.carrier == "TREX", "friylab"] = "Fcat"
+    natrail_county_carr_miles = (
+        get_prc_nat_rail
+        .groupby(['stcntyfips', 'carrier', 'friylab'])
+        .miles.sum().reset_index()
+    )
+    county_carr_miles_test = county_carr_miles.merge(
+        natrail_county_carr_miles, on=["stcntyfips", "carrier", "friylab"]
+    )
+    assert np.allclose(
+        county_carr_miles_test.county_carr_friy_mi,
+        county_carr_miles_test.miles,
+    )
+
+
 def test_state_fuel_totals(
     get_emis_quant, fueluserail2019_input_df, remove_carriers=("BNSF", "UP", "KCS")
 ):
@@ -65,7 +124,7 @@ def test_state_fuel_totals(
         "Line Haul Locomotives: Passenger Trains (Amtrak)": "Fcat",
         "Line Haul Locomotives: Commuter Lines": "Fcat",
     }
-    st_scc_fuel_consump = (
+    st_carr_fuel_consump = (
         get_emis_quant.loc[
             lambda df: (df.year == 2019) & (~df.carrier.isin(remove_carriers))
         ]
@@ -75,17 +134,15 @@ def test_state_fuel_totals(
         .assign(friylab=lambda df: df.scc_description_level_4.map(scc_friylab_map))
     )
 
-    st_scc_fuel_consump_test = st_scc_fuel_consump.merge(
+    st_scc_fuel_consump_test = st_carr_fuel_consump.merge(
         fueluserail2019_input_df, on=["carrier", "friylab"]
     )
 
-    mask = np.isclose(
+    assert np.allclose(
         st_scc_fuel_consump_test.st_fuel_by_carr_act,
         st_scc_fuel_consump_test.st_fuel_consmp,
     )
-    test = st_scc_fuel_consump_test[~mask]
 
-    fueluserail2019_input_df
 
 
 def test_county_control_tot_cls1(
