@@ -3,16 +3,16 @@ Tests emisrt module.
 """
 import os
 import pytest
-import inflection
 import pandas as pd
 import numpy as np
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, get_out_file_tsmp
+from locoerlt.utilis import (PATH_RAW, PATH_INTERIM,
+                             get_out_file_tsmp)
 from locoerlt.emisrt import (
     hap_speciation_mult,
 )
 
-
 st = get_out_file_tsmp()
+
 
 # Speciation table
 path_hap_speciation = os.path.join(

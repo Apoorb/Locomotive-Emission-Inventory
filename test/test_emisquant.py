@@ -3,13 +3,14 @@ Tests emisquant module.
 """
 import os
 import pytest
-import inflection
+import glob
 import pandas as pd
 import numpy as np
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_out_file_tsmp
 from locoerlt.emisquant import process_proj_fac
 from locoerlt.fuelcsmp import preprc_fuelusg, preprc_link
 from test.test_emisrt import get_nox_pm10_pm25_voc_epa_em_fac, hap_speciation
+
 
 map_rrgrp = {
     "M": "Freight",  # Main sub network
@@ -25,17 +26,22 @@ map_rrgrp = {
     "T": "Other",  # Trail on former rail right-of-way
 }
 
-st = get_out_file_tsmp()
-path_emisquant = os.path.join(PATH_PROCESSED, f"emis_quant_loco_{st}.csv")
-path_emisquant_agg = os.path.join(PATH_PROCESSED, f"emis_quant_loco_agg" f"_{st}.csv")
+path_emisquant = glob.glob(os.path.join(
+    PATH_PROCESSED, "emis_quant_loco_[0-9]*-*-*.csv"))[0]
+path_emisquant_agg = glob.glob(os.path.join(
+    PATH_PROCESSED, "emis_quant_loco_agg_[0-9]*-*-*.csv"))[0]
 path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
-path_fuel_consump = os.path.join(PATH_INTERIM, f"fuelconsump_2019_tx_{st}.csv")
+path_fuel_consump = glob.glob(os.path.join(
+    PATH_INTERIM, f"fuelconsump_2019_tx_*-*-*.csv"))[0]
 path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
 path_natrail2020_csv = os.path.join(PATH_INTERIM,
                                     "North_American_Rail_Lines.csv")
 path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")
-
+# ERTAC Class 1 Rates
+path_ertac = os.path.join(PATH_INTERIM, "testing",
+                          "2019TTIVs2017ERTAC_QAQC.csv")
+path_out_qaqc_ertac=os.path.join(PATH_PROCESSED, "tti_vs_ertac_2017.xlsx")
 
 @pytest.fixture()
 def get_prc_nat_rail():
@@ -67,6 +73,11 @@ def get_emis_quant_agg_across_carriers():
 
 
 @pytest.fixture()
+def get_ertac_2017_df():
+    return pd.read_csv(path_ertac)
+
+
+@pytest.fixture()
 def get_proj_fac():
     return process_proj_fac(path_proj_fac)
 
@@ -76,6 +87,42 @@ def get_county_cls1_prop_input():
     cls1_cntpct = pd.read_csv(path_cls1_cntpct)
     return cls1_cntpct
 
+
+def test_cls1_county_fuel_consmp_with_ertac(get_emis_quant_agg_across_carriers,
+                                            get_ertac_2017_df):
+    get_emis_quant_agg_cls1_fri_17 = (
+        get_emis_quant_agg_across_carriers.loc[lambda df: (
+            (df.scc_description_level_4.isin(
+                ["Line Haul Locomotives: Class I Operations"]))
+            & (df.year == 2017)
+        )]
+        .groupby(['county_name','stcntyfips'])
+        .county_carr_friy_yardnm_fuel_consmp_by_yr.min()
+        .reset_index()
+    )
+
+    get_ertac_2017_df_fil = (
+        get_ertac_2017_df.drop(columns="2019 TTI")
+        .rename(columns={'2017 ERTAC': 'ertac_2017'})
+        .assign(
+            FIPS=lambda df:df.FIPS.astype(float),
+            ertac_2017=lambda df: pd.to_numeric(df.ertac_2017, errors='coerce'),
+        ))
+    get_emis_quant_agg_cls1_fri_17_ertac = (
+        get_emis_quant_agg_cls1_fri_17
+        .merge(get_ertac_2017_df_fil,
+               left_on="stcntyfips", right_on="FIPS", how="outer")
+        .rename(columns={"county_carr_friy_yardnm_fuel_consmp_by_yr":
+                                     "tti_2017"})
+        .assign(
+            tti_min_ertac=lambda df: np.round(df.tti_2017 - df.ertac_2017, 2),
+            per_dif_tti_ertac=lambda df: np.round(100 * df.tti_min_ertac
+                                         / df.ertac_2017, 2)
+        )
+    )
+    get_emis_quant_agg_cls1_fri_17_ertac.to_excel(path_out_qaqc_ertac)
+    assert all(get_emis_quant_agg_cls1_fri_17_ertac.per_dif_tti_ertac.dropna()
+        < 2.18)
 
 def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
     scc_friylab_map = {
