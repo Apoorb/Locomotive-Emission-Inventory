@@ -1,4 +1,5 @@
 import sys
+import inflection
 import re
 from pathlib import Path
 import os
@@ -78,6 +79,14 @@ def read_shapefile(path_shp_file):
     df = pd.DataFrame(columns=fields, data=records)
     # df = df.assign(coords=shps)
     return df
+
+
+def get_snake_case_dict(columns):
+    """ Get columns in snake_case."""
+    return {
+        col: re.sub(r"\W+", "_", inflection.underscore(col))
+        for col in columns
+    }
 
 
 if __name__ == "__main__":
