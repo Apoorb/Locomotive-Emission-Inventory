@@ -4,7 +4,9 @@ from itertools import chain
 import numpy as np
 import pandas as pd
 import glob
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
+from locoerlt.utilis import (PATH_RAW, PATH_INTERIM, PATH_PROCESSED,
+                             get_snake_case_dict, get_out_file_tsmp,
+                             cleanup_prev_output)
 
 
 def get_txled_factors(
@@ -95,11 +97,12 @@ def get_deri_quantity_red(
         .assign(
             em_quant_yard_region_tons=lambda df: (
                 df.em_quant_yard_region / us_ton_to_grams
-            )
+            ),
         )
     )
 
-    deri_loco_nox_red_yr = pd.read_excel(path_deri_loco_nox_red_yr_, "Locomotive")
+    deri_loco_nox_red_yr = pd.read_excel(path_deri_loco_nox_red_yr_,
+                                         "Locomotive")
 
     deri_loco_nox_red_yr_prcd = (
         deri_loco_nox_red_yr.rename(columns=get_snake_case_dict(deri_loco_nox_red_yr))
@@ -247,6 +250,7 @@ def get_deri_controlled_fac(
 
 
 if __name__ == "__main__":
+    st = get_out_file_tsmp()
     path_txled_counties = os.path.join(PATH_RAW, "txled_counties.csv")
     path_texas_counties = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
     path_deri_loco_regions = os.path.join(PATH_RAW, "deri_loco_regions.json")
@@ -256,7 +260,11 @@ if __name__ == "__main__":
     path_emisquant_agg = glob.glob(
         os.path.join(PATH_PROCESSED, "emis_quant_loco_agg_[0-9]*-*-*.csv")
     )[0]
-    path_out_uncntr_cntr = os.path.join(PATH_PROCESSED, "uncntr_cntr_emis_quant.csv")
+    path_out_uncntr_cntr_pat = os.path.join(PATH_PROCESSED,
+                                        f"uncntr_cntr_emis_quant_[0-9]*-*-*.csv")
+    cleanup_prev_output(path_out_uncntr_cntr_pat)
+    path_out_uncntr_cntr = os.path.join(PATH_PROCESSED,
+                                        f"uncntr_cntr_emis_quant_{st}.csv")
     emis_quant_agg = pd.read_csv(path_emisquant_agg, index_col=0)
 
     txled_fac = get_txled_factors(
