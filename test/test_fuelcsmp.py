@@ -24,6 +24,9 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
+path_fill_missing_yardnames = os.path.join(PATH_INTERIM, "gis_debugging",
+                                           "north_america_rail_2021",
+                                           "filled_missing_yards.xlsx")
 path_natrail2020_csv = os.path.join(PATH_INTERIM, "North_American_Rail_Lines.csv")
 path_natrail2020_old = os.path.join(PATH_RAW, "archive", "NatRail_2020.csv")
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
@@ -44,6 +47,7 @@ def get_cls1_cls3_comm_passg_py_df(request):
         path_rail_carrier_grp_=path_rail_carrier_grp,
         path_fueluserail2019_=path_fueluserail2019,
         path_cls1_cntpct_=path_cls1_cntpct,
+        path_fill_missing_yardnames_=path_fill_missing_yardnames,
         map_rrgrp_=map_rrgrp,
         filter_st=("TX",),
     )
@@ -232,7 +236,8 @@ def test_py_and_sql_data_eq_for_cls3_pass_commut(
     Fails for "2021 NatRail Data" dataset as this dataset does not have the
     following 3 carrier: 'TNMR', 'WTLC', 'TSE'.
     """
-    # FixMe: Recompute fuel usage based on 2021 NatRail data.
+    # FixMe: Will fail as of 4/20/2021! Recompute fuel usage based on 2021
+    #  NatRail data.
     test = pd.merge(
         get_cls3_comm_passg_py_df,
         get_cls3_comm_passg_sql_df,

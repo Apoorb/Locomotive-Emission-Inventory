@@ -2,6 +2,7 @@
 Tests emisquant module.
 """
 import os
+from io import StringIO
 import pytest
 import glob
 import pandas as pd
@@ -25,7 +26,27 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
-
+xwalk_ssc_desc_4_rr_grp_netgrp = StringIO(
+    """scc_description_level_4,rr_group,rr_netgrp
+    Line Haul Locomotives: Class I Operations,Class I,Freight
+    Line Haul Locomotives: Class I Operations,Class I,Industrial
+    Line Haul Locomotives: Class II / III Operations,Class III,Freight
+    Line Haul Locomotives: Class II / III Operations,Class III,Industrial
+    Line Haul Locomotives: Passenger Trains (Amtrak),Passenger,Freight
+    Line Haul Locomotives: Commuter Lines,Commuter,Freight
+    Line Haul Locomotives: Commuter Lines,Commuter,Industrial
+    Line Haul Locomotives: Commuter Lines,Commuter,Yard
+    Yard Locomotives,Class I,Yard
+    Yard Locomotives,Class III,Yard
+"""
+)
+xwalk_ssc_desc_4_rr_grp_netgrp_df_ = pd.read_csv(
+    xwalk_ssc_desc_4_rr_grp_netgrp, sep=","
+).assign(
+    scc_description_level_4=lambda df: df.scc_description_level_4.str.strip())
+path_fill_missing_yardnames = os.path.join(PATH_INTERIM, "gis_debugging",
+                                           "north_america_rail_2021",
+                                           "filled_missing_yards.xlsx")
 path_emisquant = glob.glob(os.path.join(
     PATH_PROCESSED, "emis_quant_loco_[0-9]*-*-*.csv"))[0]
 path_emisquant_agg = glob.glob(os.path.join(
@@ -41,13 +62,16 @@ path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")
 # ERTAC Class 1 Rates
 path_ertac = os.path.join(PATH_INTERIM, "testing",
                           "2019TTIVs2017ERTAC_QAQC.csv")
-path_out_qaqc_ertac=os.path.join(PATH_PROCESSED, "tti_vs_ertac_2017.xlsx")
+path_out_qaqc_ertac=os.path.join(PATH_PROCESSED,
+                                 "tti_vs_ertac_cls1_freight_2017.xlsx")
+
 
 @pytest.fixture()
 def get_prc_nat_rail():
     return preprc_link(
         path_natrail2020_=path_natrail2020_csv,
         path_rail_carrier_grp_=path_rail_carrier_grp,
+        path_fill_missing_yardnames_=path_fill_missing_yardnames,
         map_rrgrp_=map_rrgrp,
     )
 
@@ -88,8 +112,9 @@ def get_county_cls1_prop_input():
     return cls1_cntpct
 
 
-def test_cls1_county_fuel_consmp_with_ertac(get_emis_quant_agg_across_carriers,
-                                            get_ertac_2017_df):
+def test_cls1_2017county_fuel_consmp_with_ertac(
+        get_emis_quant_agg_across_carriers,
+        get_ertac_2017_df):
     get_emis_quant_agg_cls1_fri_17 = (
         get_emis_quant_agg_across_carriers.loc[lambda df: (
             (df.scc_description_level_4.isin(
@@ -124,20 +149,13 @@ def test_cls1_county_fuel_consmp_with_ertac(get_emis_quant_agg_across_carriers,
     assert all(get_emis_quant_agg_cls1_fri_17_ertac.per_dif_tti_ertac.dropna()
         < 2.18)
 
+
 def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
-    scc_friylab_map = {
-        "Line Haul Locomotives: Class I Operations": "Fcat",
-        "Line Haul Locomotives: Class II / III Operations": "Fcat",
-        "Yard Locomotives": "IYcat",
-        "Line Haul Locomotives: Passenger Trains (Amtrak)": "Fcat",
-        "Line Haul Locomotives: Commuter Lines": "Fcat",
-    }
     county_carr_miles = (
         get_emis_quant
         .groupby(["year", "stcntyfips", "carrier", "scc_description_level_4", "pollutant"])
         .agg(county_carr_friy_mi=("county_carr_friy_yardnm_miles_by_yr", "sum"))
         .reset_index()
-        .assign(friylab=lambda df: df.scc_description_level_4.map(scc_friylab_map))
     )
 
     # TREX somehow has yard fuel consumption. For reporting it should likely
@@ -145,11 +163,12 @@ def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
     get_prc_nat_rail.loc[lambda df: df.carrier == "TREX", "friylab"] = "Fcat"
     natrail_county_carr_miles = (
         get_prc_nat_rail
-        .groupby(['stcntyfips', 'carrier', 'friylab'])
+        .merge(xwalk_ssc_desc_4_rr_grp_netgrp_df_,on=["rr_group","rr_netgrp"])
+        .groupby(['stcntyfips', 'carrier', 'scc_description_level_4'])
         .miles.sum().reset_index()
     )
     county_carr_miles_test = county_carr_miles.merge(
-        natrail_county_carr_miles, on=["stcntyfips", "carrier", "friylab"]
+        natrail_county_carr_miles, on=["stcntyfips", "carrier", "scc_description_level_4"]
     )
     assert np.allclose(
         county_carr_miles_test.county_carr_friy_mi,
@@ -164,21 +183,14 @@ def test_state_fuel_totals(
     #  counties and class 1 carriers, such that the recomputed fuel for each
     #  carrier at state level matches the observed data. Current hack in to
     #  let the state totals by carriers not match the observed value.
-    scc_friylab_map = {
-        "Line Haul Locomotives: Class I Operations": "Fcat",
-        "Line Haul Locomotives: Class II / III Operations": "Fcat",
-        "Yard Locomotives": "IYcat",
-        "Line Haul Locomotives: Passenger Trains (Amtrak)": "Fcat",
-        "Line Haul Locomotives: Commuter Lines": "Fcat",
-    }
     st_carr_fuel_consump = (
         get_emis_quant.loc[
             lambda df: (df.year == 2019) & (~df.carrier.isin(remove_carriers))
         ]
-        .groupby(["year", "carrier", "scc_description_level_4", "pollutant"])
+        .merge(xwalk_ssc_desc_4_rr_grp_netgrp_df_,on=["rr_group","rr_netgrp"])
+        .groupby(["year", "carrier", "friylab", "pollutant"])
         .agg(st_fuel_by_carr_act=("county_carr_friy_yardnm_fuel_consmp_by_yr", "sum"))
         .reset_index()
-        .assign(friylab=lambda df: df.scc_description_level_4.map(scc_friylab_map))
     )
 
     st_scc_fuel_consump_test = st_carr_fuel_consump.merge(
@@ -189,7 +201,6 @@ def test_state_fuel_totals(
         st_scc_fuel_consump_test.st_fuel_by_carr_act,
         st_scc_fuel_consump_test.st_fuel_consmp,
     )
-
 
 
 def test_county_control_tot_cls1(
