@@ -37,9 +37,9 @@ def preprc_link(
     filter_st=("TX",),
     filter_rrgrp=("Freight", "Industrial", "Yard"),
     map_friylab={
-        "generic":{"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"},
+        "generic": {"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"},
         "Class I": {"Freight": "Fcat", "Industrial": "Fcat", "Yard": "IYcat"},
-    }
+    },
 ) -> pd.DataFrame:
     """
     Pre-process national rail link data.
@@ -70,13 +70,9 @@ def preprc_link(
     natrail2020 = pd.read_csv(path_natrail2020_)
     missing_yardnames = pd.read_excel(path_fill_missing_yardnames_)
     rail_carrier_grp = pd.read_csv(path_rail_carrier_grp_, index_col=0)
-    natrail2020_1 = (
-        natrail2020
-        .rename(columns={col: inflection.underscore(col)
-                         for col in natrail2020.columns})
-        .assign(
-            rr_netgrp=lambda df: df.net.map(map_rrgrp_))
-    )
+    natrail2020_1 = natrail2020.rename(
+        columns={col: inflection.underscore(col) for col in natrail2020.columns}
+    ).assign(rr_netgrp=lambda df: df.net.map(map_rrgrp_))
 
     strail_2020 = natrail2020_1.loc[
         lambda df: (df.stateab.isin(filter_st)) & (df.rr_netgrp.isin(filter_rrgrp))
@@ -90,11 +86,10 @@ def preprc_link(
         .merge(missing_yardnames, on=["fraarcid", "net"], how="left")
         .assign(
             yardname=lambda df: np.select(
-                [~ df.yardname_filled_arcmap.isna(),
-                 df.yardname_filled_arcmap.isna()],
-                [df.yardname_filled_arcmap,
-                 df.yardname],
-                np.nan),
+                [~df.yardname_filled_arcmap.isna(), df.yardname_filled_arcmap.isna()],
+                [df.yardname_filled_arcmap, df.yardname],
+                np.nan,
+            ),
             carrier=lambda df: df.carrier.replace(regex=r"^TRE$", value="TREX"),
             friylab=lambda df: df.rr_netgrp.map(map_friylab["generic"]),
         )
@@ -108,14 +103,18 @@ def preprc_link(
         .merge(rail_carrier_grp, on="carrier", how="left")
     )
     strail_2020_preprocess.loc[
-        lambda df: df.rr_group == "Class I", "friylab"] = (
-        strail_2020_preprocess.loc[lambda df: df.rr_group == "Class I",
-                                   "rr_netgrp"].map(map_friylab["Class I"])
+        lambda df: df.rr_group == "Class I", "friylab"
+    ] = strail_2020_preprocess.loc[
+        lambda df: df.rr_group == "Class I", "rr_netgrp"
+    ].map(
+        map_friylab["Class I"]
     )
-    assert len(strail_2020_preprocess.loc[lambda df: (df.net == "Y")
-                                                 & (df.yardname == "")]) == 0, (
-        "Check why there are missing yardnames after imputation."
-    )
+    assert (
+        len(
+            strail_2020_preprocess.loc[lambda df: (df.net == "Y") & (df.yardname == "")]
+        )
+        == 0
+    ), "Check why there are missing yardnames after imputation."
     return strail_2020_preprocess
 
 
@@ -397,9 +396,12 @@ if __name__ == "__main__":
     # natrail_shp = read_shapefile(path_natrail2020)
     path_natrail2020_csv = os.path.join(PATH_INTERIM, "North_American_Rail_Lines.csv")
     # natrail_shp.to_csv(path_natrail2020_csv)
-    path_fill_missing_yardnames = os.path.join(PATH_INTERIM, "gis_debugging",
-                                               "north_america_rail_2021",
-                                               "filled_missing_yards.xlsx")
+    path_fill_missing_yardnames = os.path.join(
+        PATH_INTERIM,
+        "gis_debugging",
+        "north_america_rail_2021",
+        "filled_missing_yards.xlsx",
+    )
     path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
     path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
     path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")

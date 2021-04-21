@@ -42,28 +42,32 @@ xwalk_ssc_desc_4_rr_grp_netgrp = StringIO(
 )
 xwalk_ssc_desc_4_rr_grp_netgrp_df_ = pd.read_csv(
     xwalk_ssc_desc_4_rr_grp_netgrp, sep=","
-).assign(
-    scc_description_level_4=lambda df: df.scc_description_level_4.str.strip())
-path_fill_missing_yardnames = os.path.join(PATH_INTERIM, "gis_debugging",
-                                           "north_america_rail_2021",
-                                           "filled_missing_yards.xlsx")
-path_emisquant = glob.glob(os.path.join(
-    PATH_PROCESSED, "emis_quant_loco_[0-9]*-*-*.csv"))[0]
-path_emisquant_agg = glob.glob(os.path.join(
-    PATH_PROCESSED, "emis_quant_loco_agg_[0-9]*-*-*.csv"))[0]
+).assign(scc_description_level_4=lambda df: df.scc_description_level_4.str.strip())
+path_fill_missing_yardnames = os.path.join(
+    PATH_INTERIM,
+    "gis_debugging",
+    "north_america_rail_2021",
+    "filled_missing_yards.xlsx",
+)
+path_emisquant = glob.glob(
+    os.path.join(PATH_PROCESSED, "emis_quant_loco_[0-9]*-*-*.csv")
+)[0]
+path_emisquant_agg = glob.glob(
+    os.path.join(PATH_PROCESSED, "emis_quant_loco_agg_[0-9]*-*-*.csv")
+)[0]
 path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
-path_fuel_consump = glob.glob(os.path.join(
-    PATH_INTERIM, f"fuelconsump_2019_tx_*-*-*.csv"))[0]
+path_fuel_consump = glob.glob(
+    os.path.join(PATH_INTERIM, f"fuelconsump_2019_tx_*-*-*.csv")
+)[0]
 path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
-path_natrail2020_csv = os.path.join(PATH_INTERIM,
-                                    "North_American_Rail_Lines.csv")
+path_natrail2020_csv = os.path.join(PATH_INTERIM, "North_American_Rail_Lines.csv")
 path_rail_carrier_grp = os.path.join(PATH_RAW, "rail_carrier_grp2020.csv")
 # ERTAC Class 1 Rates
-path_ertac = os.path.join(PATH_INTERIM, "testing",
-                          "2019TTIVs2017ERTAC_QAQC.csv")
-path_out_qaqc_ertac=os.path.join(PATH_PROCESSED,
-                                 "tti_vs_ertac_cls1_freight_2017.xlsx")
+path_ertac = os.path.join(PATH_INTERIM, "testing", "2019TTIVs2017ERTAC_QAQC.csv")
+path_out_qaqc_ertac = os.path.join(
+    PATH_PROCESSED, "tti_vs_ertac_cls1_freight_2017.xlsx"
+)
 
 
 @pytest.fixture()
@@ -113,47 +117,53 @@ def get_county_cls1_prop_input():
 
 
 def test_cls1_2017county_fuel_consmp_with_ertac(
-        get_emis_quant_agg_across_carriers,
-        get_ertac_2017_df):
+    get_emis_quant_agg_across_carriers, get_ertac_2017_df
+):
     get_emis_quant_agg_cls1_fri_17 = (
-        get_emis_quant_agg_across_carriers.loc[lambda df: (
-            (df.scc_description_level_4.isin(
-                ["Line Haul Locomotives: Class I Operations"]))
-            & (df.year == 2017)
-        )]
-        .groupby(['county_name','stcntyfips'])
+        get_emis_quant_agg_across_carriers.loc[
+            lambda df: (
+                (
+                    df.scc_description_level_4.isin(
+                        ["Line Haul Locomotives: Class I Operations"]
+                    )
+                )
+                & (df.year == 2017)
+            )
+        ]
+        .groupby(["county_name", "stcntyfips"])
         .county_carr_friy_yardnm_fuel_consmp_by_yr.min()
         .reset_index()
     )
 
     get_ertac_2017_df_fil = (
         get_ertac_2017_df.drop(columns="2019 TTI")
-        .rename(columns={'2017 ERTAC': 'ertac_2017'})
+        .rename(columns={"2017 ERTAC": "ertac_2017"})
         .assign(
-            FIPS=lambda df:df.FIPS.astype(float),
-            ertac_2017=lambda df: pd.to_numeric(df.ertac_2017, errors='coerce'),
-        ))
+            FIPS=lambda df: df.FIPS.astype(float),
+            ertac_2017=lambda df: pd.to_numeric(df.ertac_2017, errors="coerce"),
+        )
+    )
     get_emis_quant_agg_cls1_fri_17_ertac = (
-        get_emis_quant_agg_cls1_fri_17
-        .merge(get_ertac_2017_df_fil,
-               left_on="stcntyfips", right_on="FIPS", how="outer")
-        .rename(columns={"county_carr_friy_yardnm_fuel_consmp_by_yr":
-                                     "tti_2017"})
+        get_emis_quant_agg_cls1_fri_17.merge(
+            get_ertac_2017_df_fil, left_on="stcntyfips", right_on="FIPS", how="outer"
+        )
+        .rename(columns={"county_carr_friy_yardnm_fuel_consmp_by_yr": "tti_2017"})
         .assign(
             tti_min_ertac=lambda df: np.round(df.tti_2017 - df.ertac_2017, 2),
-            per_dif_tti_ertac=lambda df: np.round(100 * df.tti_min_ertac
-                                         / df.ertac_2017, 2)
+            per_dif_tti_ertac=lambda df: np.round(
+                100 * df.tti_min_ertac / df.ertac_2017, 2
+            ),
         )
     )
     get_emis_quant_agg_cls1_fri_17_ertac.to_excel(path_out_qaqc_ertac)
-    assert all(get_emis_quant_agg_cls1_fri_17_ertac.per_dif_tti_ertac.dropna()
-        < 2.18)
+    assert all(get_emis_quant_agg_cls1_fri_17_ertac.per_dif_tti_ertac.dropna() < 2.18)
 
 
 def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
     county_carr_miles = (
-        get_emis_quant
-        .groupby(["year", "stcntyfips", "carrier", "scc_description_level_4", "pollutant"])
+        get_emis_quant.groupby(
+            ["year", "stcntyfips", "carrier", "scc_description_level_4", "pollutant"]
+        )
         .agg(county_carr_friy_mi=("county_carr_friy_yardnm_miles_by_yr", "sum"))
         .reset_index()
     )
@@ -162,13 +172,16 @@ def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
     # to freight.
     get_prc_nat_rail.loc[lambda df: df.carrier == "TREX", "friylab"] = "Fcat"
     natrail_county_carr_miles = (
-        get_prc_nat_rail
-        .merge(xwalk_ssc_desc_4_rr_grp_netgrp_df_,on=["rr_group","rr_netgrp"])
-        .groupby(['stcntyfips', 'carrier', 'scc_description_level_4'])
-        .miles.sum().reset_index()
+        get_prc_nat_rail.merge(
+            xwalk_ssc_desc_4_rr_grp_netgrp_df_, on=["rr_group", "rr_netgrp"]
+        )
+        .groupby(["stcntyfips", "carrier", "scc_description_level_4"])
+        .miles.sum()
+        .reset_index()
     )
     county_carr_miles_test = county_carr_miles.merge(
-        natrail_county_carr_miles, on=["stcntyfips", "carrier", "scc_description_level_4"]
+        natrail_county_carr_miles,
+        on=["stcntyfips", "carrier", "scc_description_level_4"],
     )
     assert np.allclose(
         county_carr_miles_test.county_carr_friy_mi,
@@ -187,7 +200,7 @@ def test_state_fuel_totals(
         get_emis_quant.loc[
             lambda df: (df.year == 2019) & (~df.carrier.isin(remove_carriers))
         ]
-        .merge(xwalk_ssc_desc_4_rr_grp_netgrp_df_,on=["rr_group","rr_netgrp"])
+        .merge(xwalk_ssc_desc_4_rr_grp_netgrp_df_, on=["rr_group", "rr_netgrp"])
         .groupby(["year", "carrier", "friylab", "pollutant"])
         .agg(st_fuel_by_carr_act=("county_carr_friy_yardnm_fuel_consmp_by_yr", "sum"))
         .reset_index()

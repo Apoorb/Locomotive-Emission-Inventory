@@ -83,10 +83,7 @@ def read_shapefile(path_shp_file):
 
 def get_snake_case_dict(columns):
     """ Get columns in snake_case."""
-    return {
-        col: re.sub(r"\W+", "_", inflection.underscore(col))
-        for col in columns
-    }
+    return {col: re.sub(r"\W+", "_", inflection.underscore(col)) for col in columns}
 
 
 if __name__ == "__main__":

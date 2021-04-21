@@ -24,9 +24,12 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
-path_fill_missing_yardnames = os.path.join(PATH_INTERIM, "gis_debugging",
-                                           "north_america_rail_2021",
-                                           "filled_missing_yards.xlsx")
+path_fill_missing_yardnames = os.path.join(
+    PATH_INTERIM,
+    "gis_debugging",
+    "north_america_rail_2021",
+    "filled_missing_yards.xlsx",
+)
 path_natrail2020_csv = os.path.join(PATH_INTERIM, "North_American_Rail_Lines.csv")
 path_natrail2020_old = os.path.join(PATH_RAW, "archive", "NatRail_2020.csv")
 path_cls1_cntpct = os.path.join(PATH_RAW, "2019CountyPct.csv")
