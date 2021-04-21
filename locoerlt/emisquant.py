@@ -98,11 +98,11 @@ def merge_cnty_nm_to_fuel_proj(
         fuel_consump_prj_.assign(
             yardname_axb=lambda df: np.select(
                 [
-                    (df.rr_netgrp != "Freight") & (~df.yardname.isna()),
-                    (df.rr_netgrp != "Freight") & (df.yardname.isna()),
+                    df.rr_netgrp == "Yard",
                     df.rr_netgrp == "Freight",
+                    df.rr_netgrp == "Industrial"
                 ],
-                [df.yardname, "noname", -99],
+                [df.yardname, -99, -99],
                 -9999,
             )
         )
@@ -135,23 +135,46 @@ def add_scc_desc_to_fuel_proj_cnty(
     """
     Add EPA SCC description to fuel consumption + county name + Projection data.
     """
-    xwalk_ssc_desc_4_rr_grp_friy = StringIO(
-        """scc_description_level_4,rr_group,friylab
-        Line Haul Locomotives: Class I Operations,Class I,Fcat
-        Line Haul Locomotives: Class II / III Operations,Class III,Fcat
-        Line Haul Locomotives: Passenger Trains (Amtrak),Passenger,Fcat
-        Line Haul Locomotives: Commuter Lines,Commuter,Fcat
-        Line Haul Locomotives: Commuter Lines,Commuter,IYcat
-        Yard Locomotives,Class I,IYcat
-        Yard Locomotives,Class III,IYcat
+    xwalk_ssc_desc_4_rr_grp_netgrp = StringIO(
+        """scc_description_level_4,rr_group,rr_netgrp
+        Line Haul Locomotives: Class I Operations,Class I,Freight
+        Line Haul Locomotives: Class I Operations,Class I,Industrial
+        Line Haul Locomotives: Class II / III Operations,Class III,Freight
+        Line Haul Locomotives: Class II / III Operations,Class III,Industrial
+        Line Haul Locomotives: Passenger Trains (Amtrak),Passenger,Freight
+        Line Haul Locomotives: Commuter Lines,Commuter,Freight
+        Line Haul Locomotives: Commuter Lines,Commuter,Industrial
+        Line Haul Locomotives: Commuter Lines,Commuter,Yard
+        Yard Locomotives,Class I,Yard
+        Yard Locomotives,Class III,Yard
     """
     )
-    xwalk_ssc_desc_4_rr_grp_friy_df_ = pd.read_csv(
-        xwalk_ssc_desc_4_rr_grp_friy, sep=","
+    xwalk_ssc_desc_4_rr_grp_netgrp_df_ = pd.read_csv(
+        xwalk_ssc_desc_4_rr_grp_netgrp, sep=","
     ).assign(scc_description_level_4=lambda df: df.scc_description_level_4.str.strip())
 
+    assert set(fuel_consump_prj_by_cnty_.loc[lambda df: (
+        df.rr_group
+        == "Passenger"), "rr_netgrp"].unique()) == {"Freight"}, (
+        "Above mapping does not consider Amtrak on industrial leads and "
+        "yards. This is inline with how fuel consumption is coded for Amtrak."
+    )
+
+    assert set(fuel_consump_prj_by_cnty_.loc[lambda df: (
+        (df.rr_group== "Commuter") & (df.carrier == "DART")),
+        "rr_netgrp"].unique()) == {'Freight'}, (
+        "Above mapping does not consider DART on industrial leads and "
+        "yards. This is inline with how fuel consumption is coded for DART.")
+
+    assert set(fuel_consump_prj_by_cnty_.loc[lambda df: (
+            (df.rr_group == "Commuter") & (df.carrier == "TREX")),
+            "rr_netgrp"].unique()) == {
+               'Freight', 'Industrial', 'Yard'}, (
+        "Above mapping considers TREX on Freight, industrial leads, and "
+        "yards. This is inline with how fuel consumption is coded for TREX.")
+
     fuel_consump_prj_by_cnty_scc_ = fuel_consump_prj_by_cnty_.merge(
-        xwalk_ssc_desc_4_rr_grp_friy_df_, on=["rr_group", "friylab"], how="outer"
+        xwalk_ssc_desc_4_rr_grp_netgrp_df_, on=["rr_group", "rr_netgrp"], how="outer"
     )
     return fuel_consump_prj_by_cnty_scc_
 
@@ -231,8 +254,10 @@ def get_emis_quant(
 
 if __name__ == "__main__":
     st = get_out_file_tsmp()
-    path_fuel_consump = os.path.join(PATH_INTERIM, "fuelconsump_2019_tx_2021-04-16.csv")
-    path_emis_rt = os.path.join(PATH_INTERIM, "emission_factor_2021-04-16.csv")
+    path_fuel_consump = os.path.join(PATH_INTERIM,
+                                     f"fuelconsump_2019_tx_{st}.csv")
+    path_emis_rt = os.path.join(PATH_INTERIM,
+                                f"emission_factor_{st}.csv")
     path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
     path_out_emisquant = os.path.join(PATH_PROCESSED, f"emis_quant_loco_{st}.csv")
