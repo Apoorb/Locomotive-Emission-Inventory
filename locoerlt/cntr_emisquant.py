@@ -80,15 +80,6 @@ def get_deri_quantity_red(
     emis_quant_region_deri = (
         controlled_emis_quant_txled_.loc[
             lambda df: (df.pollutant == "NOX")
-            & (
-                df.scc_description_level_4.isin(
-                    [
-                        "Yard Locomotives",
-                        "Line Haul Locomotives: Class I Operations",
-                        "Line Haul Locomotives: Class II / III Operations",
-                    ],
-                )
-            )
         ]
         .groupby(["tp_county_nm", "year"])
         .agg(
