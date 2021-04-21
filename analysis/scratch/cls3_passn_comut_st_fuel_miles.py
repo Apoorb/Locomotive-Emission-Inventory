@@ -14,7 +14,10 @@ map_rrgrp = {
     "M": "Freight",  # Main sub network
     "I": "Freight",  # Major Industrial Lead
     "S": "Freight",  # Passing sidings over 4000 feet long
-    "O": "Industrial",  # Other track (minor industrial leads)
+    "O": "Freight",  # Initially was Industrial, but, we are changing
+    # it to freight, as industrial does not have yardname. Also, a lot of
+    # the minor industrial leads function differently then a switching
+    # yard, so they need to be treated differently.
     "Y": "Yard",  # Yard Switching
     "Z": "Transit",  # Transit-only rail line or museum/tourist operation
     "R": "Other",  # Abandoned line that has been physically removed
@@ -23,6 +26,7 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
+
 path_natrail2020_csv = os.path.join(PATH_INTERIM, "North_American_Rail_Lines.csv")
 path_natrail2020_csv = os.path.join(
     PATH_RAW, "archive", "North_American_Rail_Lines_4_16_2021.csv"
