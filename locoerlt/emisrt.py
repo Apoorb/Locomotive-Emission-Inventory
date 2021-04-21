@@ -328,8 +328,7 @@ def so2_fac(
     3. Molecular wt of SO2 by S: 64/32
 
     4. Sulfur content:  https://clean-diesel.org/nonroad.html and
-    EPA420-F-04-032: https://nepis.epa.gov/Exe/ZyPURL.cgi
-    ?Dockey=P10001RN.txt
+    EPA420-F-04-032: https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P10001RN.txt
 
     4.1 15 ppm 2012 and after
 
