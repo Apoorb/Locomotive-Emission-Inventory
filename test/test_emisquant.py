@@ -292,11 +292,12 @@ def test_co2_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "CO2"
     ]
     co2_emis_fac["emis_fac_estim"] = (
-            co2_emis_fac.em_quant
-            / co2_emis_fac.county_carr_friy_fuel_consmp_by_yr)
-    test_co2_estim = (co2_emis_fac.dropna(subset=["emis_fac_estim"]))
-    estim_close_to_coded = np.allclose(test_co2_estim.emis_fac_estim,
-                                       test_co2_estim.em_fac)
+        co2_emis_fac.em_quant / co2_emis_fac.county_carr_friy_fuel_consmp_by_yr
+    )
+    test_co2_estim = co2_emis_fac.dropna(subset=["emis_fac_estim"])
+    estim_close_to_coded = np.allclose(
+        test_co2_estim.emis_fac_estim, test_co2_estim.em_fac
+    )
     emis_fac_equal_intended = all(co2_emis_fac.em_fac == 2778 * 0.99 * (44 / 12))
     assert estim_close_to_coded and emis_fac_equal_intended
 
@@ -306,19 +307,19 @@ def test_so2_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "SO2"
     ]
     so2_emis_fac["emis_fac_estim"] = (
-            so2_emis_fac.em_quant
-            / so2_emis_fac.county_carr_friy_fuel_consmp_by_yr)
-    test_so2_estim = (so2_emis_fac.dropna(subset=["emis_fac_estim"]))
-    estim_close_to_coded = np.allclose(test_so2_estim.emis_fac_estim,
-                                       test_so2_estim.em_fac)
+        so2_emis_fac.em_quant / so2_emis_fac.county_carr_friy_fuel_consmp_by_yr
+    )
+    test_so2_estim = so2_emis_fac.dropna(subset=["emis_fac_estim"])
+    estim_close_to_coded = np.allclose(
+        test_so2_estim.emis_fac_estim, test_so2_estim.em_fac
+    )
     so2_emis_fac_2011 = so2_emis_fac[so2_emis_fac.year == 2011]
     so2_emis_fac_2012_50 = so2_emis_fac[so2_emis_fac.year >= 2012]
     so2_2011_500_ppm_s = (0.1346 * 23809.5) * 0.97 * (64 / 32) * 500 * 1e-6
     so2_2012_50_15_ppm_s = (0.1346 * 23809.5) * 0.97 * (64 / 32) * 15 * 1e-6
-    emis_fac_equal_intended = (all(
-        so2_emis_fac_2011.em_fac == so2_2011_500_ppm_s)
-        & np.allclose(so2_emis_fac_2012_50.em_fac, so2_2012_50_15_ppm_s
-    ))
+    emis_fac_equal_intended = all(
+        so2_emis_fac_2011.em_fac == so2_2011_500_ppm_s
+    ) & np.allclose(so2_emis_fac_2012_50.em_fac, so2_2012_50_15_ppm_s)
     assert estim_close_to_coded and emis_fac_equal_intended
 
 
@@ -327,11 +328,12 @@ def test_nh3_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "NH3"
     ]
     nh3_emis_fac["emis_fac_estim"] = (
-            nh3_emis_fac.em_quant
-            / nh3_emis_fac.county_carr_friy_fuel_consmp_by_yr)
-    test_nh3_estim = (nh3_emis_fac.dropna(subset=["emis_fac_estim"]))
-    estim_close_to_coded = np.allclose(test_nh3_estim.emis_fac_estim,
-                                       test_nh3_estim.em_fac)
+        nh3_emis_fac.em_quant / nh3_emis_fac.county_carr_friy_fuel_consmp_by_yr
+    )
+    test_nh3_estim = nh3_emis_fac.dropna(subset=["emis_fac_estim"])
+    estim_close_to_coded = np.allclose(
+        test_nh3_estim.emis_fac_estim, test_nh3_estim.em_fac
+    )
     emis_fac_equal_intended = all(nh3_emis_fac.em_fac == 1.83e-04 * 453.592)
     assert estim_close_to_coded and emis_fac_equal_intended
 
@@ -341,11 +343,12 @@ def test_co_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "CO"
     ]
     co_emis_fac["emis_fac_estim"] = (
-            co_emis_fac.em_quant
-            / co_emis_fac.county_carr_friy_fuel_consmp_by_yr)
-    test_co_estim = (co_emis_fac.dropna(subset=["emis_fac_estim"]))
-    estim_close_to_coded = np.allclose(test_co_estim.emis_fac_estim,
-                                       test_co_estim.em_fac)
+        co_emis_fac.em_quant / co_emis_fac.county_carr_friy_fuel_consmp_by_yr
+    )
+    test_co_estim = co_emis_fac.dropna(subset=["emis_fac_estim"])
+    estim_close_to_coded = np.allclose(
+        test_co_estim.emis_fac_estim, test_co_estim.em_fac
+    )
     co_emis_fac_cls1_passng_comm = co_emis_fac.loc[
         lambda df: df.scc_description_level_4.isin(
             [
@@ -378,16 +381,25 @@ def test_nox_pm10_pm25_voc_epa_em_fac_2011_40(
     nox_pm10_pm25_voc_2011_40 = get_emis_quant_agg_across_carriers.loc[
         lambda df: (df.pollutant.isin(["NOX", "PM10-PRI", "PM25-PRI", "VOC"]))
         & (df.year < 2040),
-        ["year", "pollutant", "scc_description_level_4", "em_fac", "em_quant",
-         "county_carr_friy_fuel_consmp_by_yr"],
+        [
+            "year",
+            "pollutant",
+            "scc_description_level_4",
+            "em_fac",
+            "em_quant",
+            "county_carr_friy_fuel_consmp_by_yr",
+        ],
     ].reset_index(drop=True)
     nox_pm10_pm25_voc_2011_40["emis_fac_estim"] = (
-            nox_pm10_pm25_voc_2011_40.em_quant
-            / nox_pm10_pm25_voc_2011_40.county_carr_friy_fuel_consmp_by_yr)
-    test_nox_pm10_pm25_voc_estim = (nox_pm10_pm25_voc_2011_40.dropna(subset=[
-        "emis_fac_estim"]))
-    estim_close_to_coded = np.allclose(test_nox_pm10_pm25_voc_estim.emis_fac_estim,
-                                       test_nox_pm10_pm25_voc_estim.em_fac)
+        nox_pm10_pm25_voc_2011_40.em_quant
+        / nox_pm10_pm25_voc_2011_40.county_carr_friy_fuel_consmp_by_yr
+    )
+    test_nox_pm10_pm25_voc_estim = nox_pm10_pm25_voc_2011_40.dropna(
+        subset=["emis_fac_estim"]
+    )
+    estim_close_to_coded = np.allclose(
+        test_nox_pm10_pm25_voc_estim.emis_fac_estim, test_nox_pm10_pm25_voc_estim.em_fac
+    )
     testdf = pd.merge(
         nox_pm10_pm25_voc_2011_40,
         get_nox_pm10_pm25_voc_epa_em_fac,
@@ -396,7 +408,8 @@ def test_nox_pm10_pm25_voc_epa_em_fac_2011_40(
         suffixes=("_epa2009", "_emisfacout"),
     )
     emis_fac_equal_intended = np.allclose(
-        testdf.em_fac_epa2009, testdf.em_fac_emisfacout)
+        testdf.em_fac_epa2009, testdf.em_fac_emisfacout
+    )
     assert emis_fac_equal_intended and estim_close_to_coded
 
 
@@ -406,16 +419,25 @@ def test_nox_pm10_pm25_voc_epa_em_fac_2040_50(
     nox_pm10_pm25_voc_2040_50 = get_emis_quant_agg_across_carriers.loc[
         lambda df: (df.pollutant.isin(["NOX", "PM10-PRI", "PM25-PRI", "VOC"]))
         & (df.year >= 2040),
-        ["year", "pollutant", "scc_description_level_4", "em_fac", "em_quant",
-         "county_carr_friy_fuel_consmp_by_yr"],
+        [
+            "year",
+            "pollutant",
+            "scc_description_level_4",
+            "em_fac",
+            "em_quant",
+            "county_carr_friy_fuel_consmp_by_yr",
+        ],
     ].reset_index(drop=True)
     nox_pm10_pm25_voc_2040_50["emis_fac_estim"] = (
-            nox_pm10_pm25_voc_2040_50.em_quant
-            / nox_pm10_pm25_voc_2040_50.county_carr_friy_fuel_consmp_by_yr)
-    test_nox_pm10_pm25_voc_estim = (nox_pm10_pm25_voc_2040_50.dropna(subset=[
-        "emis_fac_estim"]))
-    estim_close_to_coded = np.allclose(test_nox_pm10_pm25_voc_estim.emis_fac_estim,
-                                       test_nox_pm10_pm25_voc_estim.em_fac)
+        nox_pm10_pm25_voc_2040_50.em_quant
+        / nox_pm10_pm25_voc_2040_50.county_carr_friy_fuel_consmp_by_yr
+    )
+    test_nox_pm10_pm25_voc_estim = nox_pm10_pm25_voc_2040_50.dropna(
+        subset=["emis_fac_estim"]
+    )
+    estim_close_to_coded = np.allclose(
+        test_nox_pm10_pm25_voc_estim.emis_fac_estim, test_nox_pm10_pm25_voc_estim.em_fac
+    )
     testdf = pd.merge(
         nox_pm10_pm25_voc_2040_50,
         get_nox_pm10_pm25_voc_epa_em_fac,
@@ -427,7 +449,9 @@ def test_nox_pm10_pm25_voc_epa_em_fac_2040_50(
     testdf["em_fac_emisfacout"] = testdf.groupby(
         ["pollutant", "scc_description_level_4"]
     ).em_fac_emisfacout.ffill()
-    emis_fac_equal_intended = np.allclose(testdf.em_fac_epa2009, testdf.em_fac_emisfacout)
+    emis_fac_equal_intended = np.allclose(
+        testdf.em_fac_epa2009, testdf.em_fac_emisfacout
+    )
 
     assert emis_fac_equal_intended and estim_close_to_coded
 
@@ -453,12 +477,12 @@ def test_lead_speciation(get_emis_quant_agg_across_carriers):
         right_on=["year", "scc_description_level_4", "pollutant"],
     )
     test_df["emis_fac_estim"] = (
-            test_df.em_quant
-            / test_df.county_carr_friy_fuel_consmp_by_yr)
-    test_lead_estim = (test_df.dropna(subset=[
-        "emis_fac_estim"]))
-    estim_close_to_coded = np.allclose(test_lead_estim.emis_fac_estim,
-                                       test_lead_estim.em_fac_x)
+        test_df.em_quant / test_df.county_carr_friy_fuel_consmp_by_yr
+    )
+    test_lead_estim = test_df.dropna(subset=["emis_fac_estim"])
+    estim_close_to_coded = np.allclose(
+        test_lead_estim.emis_fac_estim, test_lead_estim.em_fac_x
+    )
     emis_fac_equal_intended = np.allclose(test_df.em_fac_y, test_df.em_fac_x)
     assert estim_close_to_coded and emis_fac_equal_intended
 
@@ -473,6 +497,7 @@ def test_all_year_present(get_emis_quant_agg_across_carriers):
         == (2050 - 2011) + 1
     )
     assert are_there_40_years_in_each_group
+
 
 #
 # def test_hap_speciation(get_emis_quant_agg_across_carriers, hap_speciation):
