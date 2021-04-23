@@ -200,7 +200,6 @@ def get_carrier_df(request):
     indirect=True,
 )
 def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df):
-    # FixMe: Recompute fuel usage based on 2021 NatRail data.
     carriers_py_cd = (
         get_cls1_cls3_comm_passg_py_df.groupby(["carrier", "rr_group"])[
             "link_fuel_consmp"
@@ -247,6 +246,8 @@ def test_py_and_sql_data_eq_for_cls3_pass_commut(
         on=["carrier", "rr_netgrp"],
         how="outer",
     )
+    print("Will fail! Recompute fuel usage based on 2021 NatRail data that "
+          "does not have 'TNMR', 'WTLC', and 'TSE'")
     pd.testing.assert_frame_equal(get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df)
 
 
@@ -322,6 +323,9 @@ def test_county_all_cls1_state_tots(get_county_cls1_freight_prop_py_cd):
     #  fail as of 4/16/2021.
     st_estimated = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1_estimated
     st_observed_data = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1
+    print("Will fail. Use TransCAD or some other software to allocate fuel to "
+          "different counties and class 1 carriers, such that the recomputed "
+          "fuel for each carrier at state level matches the observed data. ")
     assert np.allclose(st_estimated, st_observed_data)
 
 
@@ -351,6 +355,9 @@ def test_county_all_cls1_state_tots_using_fuel_data(
         cls1_st_totals_input_df.st_fuel_consmp_by_cls1,
         cls1_st_totals_input_df.st_fuel_consmp,
     )
+    print("Will fail. Use TransCAD or some other software to allocate fuel to "
+          "different counties and class 1 carriers, such that the recomputed "
+          "fuel for each carrier at state level matches the observed data. ")
     assert is_cls1_input_fuel_eq_st_fuel_estimated & is_cls1_input_fuel_eq_st_fuel_data
 
 
@@ -395,5 +402,4 @@ def test_notcls1_fuel_consump_tots_by_st(
         cls3_pass_comut_st_totals_input_df.st_fuel_consmp_x,
         cls3_pass_comut_st_totals_input_df.st_fuel_consmp_y,
     )
-
     assert is_notcls1_sum_link_fuel_eq_st_fuel & is_notcls1_input_fuel_eq_st_fuel

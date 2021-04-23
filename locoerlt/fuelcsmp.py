@@ -36,10 +36,7 @@ def preprc_link(
     ),
     filter_st=("TX",),
     filter_rrgrp=("Freight", "Industrial", "Yard"),
-    map_friylab={
-        "generic": {"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"},
-        "Class I": {"Freight": "Fcat", "Industrial": "Fcat", "Yard": "IYcat"},
-    },
+    map_friylab={"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"},
 ) -> pd.DataFrame:
     """
     Pre-process national rail link data.
@@ -58,9 +55,7 @@ def preprc_link(
     filter_rrgrp:
         Rail road groups that need to be included in this study.
     map_friylab:
-        For class 1 assume all line haul fuel consumption in from freight and
-        industrial network and all yard fuel consumption is from yard network.
-        For class 3 line haul fuel consumption only uses freight and yard
+        Line haul fuel consumption only uses freight and yard
         switching fuel consumption uses yard and industrial networks.
     Returns
     -------
@@ -91,23 +86,16 @@ def preprc_link(
                 np.nan,
             ),
             carrier=lambda df: df.carrier.replace(regex=r"^TRE$", value="TREX"),
-            friylab=lambda df: df.rr_netgrp.map(map_friylab["generic"]),
+            friylab=lambda df: df.rr_netgrp.map(map_friylab),
         )
         .loc[
             lambda df: (~df.carrier.isin(["DART", "AMTK"]))
             | ((df.carrier == "DART") & (df.stcntyfips == 48121))
             | ((df.carrier == "AMTK") & (df.rr_netgrp == "Freight"))
         ]  # 1. DART uses fuel only in Denton county. It uses electric engine in
-        # Dallas
+        # Dallas. 48121: Denton County FIPS code
         # 2. Only use freight network for Amtrak
         .merge(rail_carrier_grp, on="carrier", how="left")
-    )
-    strail_2020_preprocess.loc[
-        lambda df: df.rr_group == "Class I", "friylab"
-    ] = strail_2020_preprocess.loc[
-        lambda df: df.rr_group == "Class I", "rr_netgrp"
-    ].map(
-        map_friylab["Class I"]
     )
     assert (
         len(
@@ -206,7 +194,7 @@ def get_class_1_freight_fuel_consump(
         .drop(columns="fips")
     )
 
-    def get_county_mimix(strail_2020_preprocess__=strail_2020_preprocess_):
+    def get_county_milemix(strail_2020_preprocess__=strail_2020_preprocess_):
         """Get the county level milemix by carrier."""
         strail_2020_preprocess__1 = strail_2020_preprocess__.loc[
             lambda df: (
@@ -227,7 +215,7 @@ def get_class_1_freight_fuel_consump(
         )
         return strail_2020_preprocess__1
 
-    strail_2020_preprocess_1 = get_county_mimix()
+    strail_2020_preprocess_1 = get_county_milemix()
 
     fueluse2019_preprc_cls1_freight_milemx = strail_2020_preprocess_1.merge(
         fueluse2019_preprc_cls1_freight,
@@ -241,7 +229,6 @@ def get_class_1_freight_fuel_consump(
         "county. Do more testing on the two dataset to figure out "
         "discrepancies between the two. "
     )
-
     return fueluse2019_preprc_cls1_freight_milemx
 
 
