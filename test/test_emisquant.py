@@ -256,7 +256,7 @@ def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
             items=[
                 "stcntyfips",
                 "carrier",
-                "yardname_axb",
+                "yardname_v1",
                 "rr_netgrp",
                 "rr_group",
                 "scc_description_level_4",
@@ -272,7 +272,7 @@ def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
             on=[
                 "stcntyfips",
                 "carrier",
-                "yardname_axb",
+                "yardname_v1",
                 "rr_netgrp",
                 "rr_group",
                 "scc_description_level_4",
@@ -460,7 +460,7 @@ def test_lead_speciation(get_emis_quant_agg_across_carriers):
     test_lead_estim = (test_df.dropna(subset=[
         "emis_fac_estim"]))
     estim_close_to_coded = np.allclose(test_lead_estim.emis_fac_estim,
-                                       test_lead_estim.em_fac)
+                                       test_lead_estim.em_fac_x)
     emis_fac_equal_intended = np.allclose(test_df.em_fac_y, test_df.em_fac_x)
     assert estim_close_to_coded and emis_fac_equal_intended
 
@@ -469,7 +469,7 @@ def test_all_year_present(get_emis_quant_agg_across_carriers):
     are_there_40_years_in_each_group = all(
         (
             get_emis_quant_agg_across_carriers.groupby(
-                ["county_name", "scc", "yardname_axb", "pollutant"]
+                ["county_name", "scc", "yardname_v1", "pollutant"]
             ).year.count()
         ).values
         == (2050 - 2011) + 1
