@@ -289,34 +289,43 @@ if __name__ == "__main__":
         deri_county_fac_=deri_county_fac,
     )
 
-    controlled_emis_quant_txled_deri_out = controlled_emis_quant_txled_deri.rename(
-        columns={"em_quant": "uncontrolled_em_quant"}
-    ).filter(
-        items=[
-            "year",
-            "stcntyfips",
-            "county_name",
-            "dat_cat_code",
-            "sector_description",
-            "scc_description_level_1",
-            "scc_description_level_2",
-            "scc_description_level_3",
-            "scc",
-            "scc_description_level_4",
-            "yardname_axb",
-            "pol_type",
-            "pollutant",
-            "pol_desc",
-            "em_fac",
-            "uncontrolled_em_quant",
-            "county_carr_friy_yardnm_fuel_consmp_by_yr",
-            "county_carr_friy_yardnm_miles_by_yr",
-            "txled_fac",
-            "controlled_em_quant_txled",
-            "deri_regional_em_reduc_fac",
-            "deri_fac",
-            "controlled_em_quant_txled_deri",
-        ]
+    us_ton_to_grams=907185,
+    controlled_emis_quant_txled_deri_out = (
+        controlled_emis_quant_txled_deri
+        .assign(
+            uncontrolled_em_quant_tons=lambda df: (
+                df.em_quant / us_ton_to_grams),
+            controlled_em_quant_txled_deri_tons=lambda df: (
+                df.controlled_em_quant_txled_deri / us_ton_to_grams)
+        )
+        .filter(
+            items=[
+                "year",
+                "stcntyfips",
+                "county_name",
+                "dat_cat_code",
+                "sector_description",
+                "scc_description_level_1",
+                "scc_description_level_2",
+                "scc_description_level_3",
+                "scc",
+                "scc_description_level_4",
+                "yardname_v1",
+                "start_lat",
+                "start_long",
+                "pol_type",
+                "pollutant",
+                "pol_desc",
+                "em_fac",
+                "uncontrolled_em_quant_tons",
+                "county_carr_friy_yardnm_fuel_consmp_by_yr",
+                "county_carr_friy_yardnm_miles_by_yr",
+                "txled_fac",
+                "deri_regional_em_reduc_fac",
+                "deri_fac",
+                "controlled_em_quant_txled_deri_tons",
+            ]
+        )
     )
 
     controlled_emis_quant_txled_deri_out.to_csv(path_out_uncntr_cntr)
