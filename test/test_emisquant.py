@@ -7,7 +7,8 @@ import pytest
 import glob
 import pandas as pd
 import numpy as np
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_out_file_tsmp
+from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, \
+    get_out_file_tsmp, xwalk_ssc_desc_4_rr_grp_netgrp
 from locoerlt.emisquant import process_proj_fac
 from locoerlt.fuelcsmp import preprc_fuelusg, preprc_link
 from test.test_emisrt import get_nox_pm10_pm25_voc_epa_em_fac, hap_speciation
@@ -26,20 +27,6 @@ map_rrgrp = {
     "F": "Other",  # Rail ferry connection
     "T": "Other",  # Trail on former rail right-of-way
 }
-xwalk_ssc_desc_4_rr_grp_netgrp = StringIO(
-    """scc_description_level_4,rr_group,rr_netgrp
-    Line Haul Locomotives: Class I Operations,Class I,Freight
-    Line Haul Locomotives: Class II / III Operations,Class III,Freight
-    Line Haul Locomotives: Passenger Trains (Amtrak),Passenger,Freight
-    Line Haul Locomotives: Commuter Lines,Commuter,Freight
-    Yard Locomotives,Class I,Industrial
-    Yard Locomotives,Class III,Industrial
-    Yard Locomotives,Commuter,Industrial
-    Yard Locomotives,Class I,Yard
-    Yard Locomotives,Class III,Yard
-    Yard Locomotives,Commuter,Yard
-"""
-)
 xwalk_ssc_desc_4_rr_grp_netgrp_df_ = pd.read_csv(
     xwalk_ssc_desc_4_rr_grp_netgrp, sep=","
 ).assign(scc_description_level_4=lambda df: df.scc_description_level_4.str.strip())
@@ -131,7 +118,7 @@ def test_cls1_2017county_fuel_consmp_with_ertac(
             )
         ]
         .groupby(["county_name", "stcntyfips"])
-        .county_carr_friy_fuel_consmp_by_yr.min()
+        .county_carr_friy_yardnm_fuel_consmp_by_yr.min()
         .reset_index()
     )
 
@@ -147,7 +134,7 @@ def test_cls1_2017county_fuel_consmp_with_ertac(
         get_emis_quant_agg_cls1_fri_17.merge(
             get_ertac_2017_df_fil, left_on="stcntyfips", right_on="FIPS", how="outer"
         )
-        .rename(columns={"county_carr_friy_fuel_consmp_by_yr": "tti_2017"})
+        .rename(columns={"county_carr_friy_yardnm_fuel_consmp_by_yr": "tti_2017"})
         .assign(
             tti_min_ertac=lambda df: np.round(df.tti_2017 - df.ertac_2017, 2),
             per_dif_tti_ertac=lambda df: np.round(
@@ -164,7 +151,7 @@ def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
         get_emis_quant.groupby(
             ["year", "stcntyfips", "carrier", "scc_description_level_4", "pollutant"]
         )
-        .agg(county_carr_friy_mi=("county_carr_friy_miles_by_yr", "sum"))
+        .agg(county_carr_friy_yardnm_miles_by_yr=("county_carr_friy_yardnm_miles_by_yr", "sum"))
         .reset_index()
     )
 
@@ -184,7 +171,7 @@ def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
         on=["stcntyfips", "carrier", "scc_description_level_4"],
     )
     assert np.allclose(
-        county_carr_miles_test.county_carr_friy_mi,
+        county_carr_miles_test.county_carr_friy_yardnm_miles_by_yr,
         county_carr_miles_test.miles,
     )
 
@@ -202,7 +189,7 @@ def test_state_fuel_totals(
         ]
         .merge(xwalk_ssc_desc_4_rr_grp_netgrp_df_, on=["rr_group", "rr_netgrp"])
         .groupby(["year", "carrier", "friylab", "pollutant"])
-        .agg(st_fuel_by_carr_act=("county_carr_friy_fuel_consmp_by_yr", "sum"))
+        .agg(st_fuel_by_carr_act=("county_carr_friy_yardnm_fuel_consmp_by_yr", "sum"))
         .reset_index()
     )
 
@@ -292,7 +279,7 @@ def test_co2_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "CO2"
     ]
     co2_emis_fac["emis_fac_estim"] = (
-        co2_emis_fac.em_quant / co2_emis_fac.county_carr_friy_fuel_consmp_by_yr
+        co2_emis_fac.em_quant / co2_emis_fac.county_carr_friy_yardnm_fuel_consmp_by_yr
     )
     test_co2_estim = co2_emis_fac.dropna(subset=["emis_fac_estim"])
     estim_close_to_coded = np.allclose(
@@ -307,7 +294,7 @@ def test_so2_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "SO2"
     ]
     so2_emis_fac["emis_fac_estim"] = (
-        so2_emis_fac.em_quant / so2_emis_fac.county_carr_friy_fuel_consmp_by_yr
+        so2_emis_fac.em_quant / so2_emis_fac.county_carr_friy_yardnm_fuel_consmp_by_yr
     )
     test_so2_estim = so2_emis_fac.dropna(subset=["emis_fac_estim"])
     estim_close_to_coded = np.allclose(
@@ -328,7 +315,7 @@ def test_nh3_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "NH3"
     ]
     nh3_emis_fac["emis_fac_estim"] = (
-        nh3_emis_fac.em_quant / nh3_emis_fac.county_carr_friy_fuel_consmp_by_yr
+        nh3_emis_fac.em_quant / nh3_emis_fac.county_carr_friy_yardnm_fuel_consmp_by_yr
     )
     test_nh3_estim = nh3_emis_fac.dropna(subset=["emis_fac_estim"])
     estim_close_to_coded = np.allclose(
@@ -343,7 +330,7 @@ def test_co_fac(get_emis_quant_agg_across_carriers):
         lambda df: df.pollutant == "CO"
     ]
     co_emis_fac["emis_fac_estim"] = (
-        co_emis_fac.em_quant / co_emis_fac.county_carr_friy_fuel_consmp_by_yr
+        co_emis_fac.em_quant / co_emis_fac.county_carr_friy_yardnm_fuel_consmp_by_yr
     )
     test_co_estim = co_emis_fac.dropna(subset=["emis_fac_estim"])
     estim_close_to_coded = np.allclose(
@@ -387,12 +374,12 @@ def test_nox_pm10_pm25_voc_epa_em_fac_2011_40(
             "scc_description_level_4",
             "em_fac",
             "em_quant",
-            "county_carr_friy_fuel_consmp_by_yr",
+            "county_carr_friy_yardnm_fuel_consmp_by_yr",
         ],
     ].reset_index(drop=True)
     nox_pm10_pm25_voc_2011_40["emis_fac_estim"] = (
         nox_pm10_pm25_voc_2011_40.em_quant
-        / nox_pm10_pm25_voc_2011_40.county_carr_friy_fuel_consmp_by_yr
+        / nox_pm10_pm25_voc_2011_40.county_carr_friy_yardnm_fuel_consmp_by_yr
     )
     test_nox_pm10_pm25_voc_estim = nox_pm10_pm25_voc_2011_40.dropna(
         subset=["emis_fac_estim"]
@@ -425,12 +412,12 @@ def test_nox_pm10_pm25_voc_epa_em_fac_2040_50(
             "scc_description_level_4",
             "em_fac",
             "em_quant",
-            "county_carr_friy_fuel_consmp_by_yr",
+            "county_carr_friy_yardnm_fuel_consmp_by_yr",
         ],
     ].reset_index(drop=True)
     nox_pm10_pm25_voc_2040_50["emis_fac_estim"] = (
         nox_pm10_pm25_voc_2040_50.em_quant
-        / nox_pm10_pm25_voc_2040_50.county_carr_friy_fuel_consmp_by_yr
+        / nox_pm10_pm25_voc_2040_50.county_carr_friy_yardnm_fuel_consmp_by_yr
     )
     test_nox_pm10_pm25_voc_estim = nox_pm10_pm25_voc_2040_50.dropna(
         subset=["emis_fac_estim"]
@@ -477,7 +464,7 @@ def test_lead_speciation(get_emis_quant_agg_across_carriers):
         right_on=["year", "scc_description_level_4", "pollutant"],
     )
     test_df["emis_fac_estim"] = (
-        test_df.em_quant / test_df.county_carr_friy_fuel_consmp_by_yr
+        test_df.em_quant / test_df.county_carr_friy_yardnm_fuel_consmp_by_yr
     )
     test_lead_estim = test_df.dropna(subset=["emis_fac_estim"])
     estim_close_to_coded = np.allclose(
@@ -498,48 +485,3 @@ def test_all_year_present(get_emis_quant_agg_across_carriers):
     )
     assert are_there_40_years_in_each_group
 
-
-#
-# def test_hap_speciation(get_emis_quant_agg_across_carriers, hap_speciation):
-#     pm25_voc = (
-#         get_emis_quant_agg_across_carriers.loc[
-#             lambda df: (df.pollutant.isin(["PM25-PRI", "VOC"]))
-#         ]
-#         .filter(items=["year", "pollutant", "scc_description_level_4", "em_fac"])
-#         .reset_index(drop=True)
-#         .rename(columns={"em_fac": "em_fac_input", "pollutant": "input_pollutant_code"})
-#     )
-#
-#     hap_em_fac = (
-#         hap_speciation.merge(
-#             pm25_voc, on=["input_pollutant_code", "scc_description_level_4"]
-#         )
-#         .assign(
-#             em_fac=lambda df: df.multiplication_factor * df.em_fac_input,
-#             output_pollutant_code=lambda df: df.output_pollutant_code.astype(str),
-#         )
-#         .filter(
-#             items=[
-#                 "year",
-#                 "scc_description_level_4",
-#                 "output_pollutant_code",
-#                 "multiplication_factor",
-#                 "em_fac_input",
-#                 "em_fac",
-#             ]
-#         )
-#     )
-#
-#     test_df = get_emis_quant_agg_across_carriers.merge(
-#         hap_em_fac,
-#         left_on=["year", "scc_description_level_4", "pollutant"],
-#         right_on=["year", "scc_description_level_4", "output_pollutant_code"],
-#     )
-#     test_df["emis_fac_estim"] = (
-#             test_df.em_quant
-#             / test_df.county_carr_friy_fuel_consmp_by_yr)
-#     test_df_estim = (test_df.dropna(subset=["emis_fac_estim"]))
-#     estim_close_to_coded = np.allclose(test_df.emis_fac_estim,
-#                                        test_df.em_fac_x)
-#     emis_fac_equal_intended = np.allclose(test_df.em_fac_y, test_df.em_fac_x)
-#     assert estim_close_to_coded and emis_fac_equal_intended

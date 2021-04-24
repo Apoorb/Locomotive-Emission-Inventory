@@ -10,6 +10,7 @@ import datetime
 import pandas as pd
 import shapefile
 from dotenv import find_dotenv, load_dotenv
+from io import StringIO
 
 
 def get_project_root() -> Path:
@@ -21,6 +22,19 @@ PATH_INTERIM = os.path.join(PATH_TO_PROJECT_ROOT, "data", "interim")
 PATH_PROCESSED = os.path.join(PATH_TO_PROJECT_ROOT, "data", "processed")
 PATH_RAW = os.path.join(PATH_TO_PROJECT_ROOT, "data", "raw")
 PATH_INTERIM_RUNNING = os.path.join(PATH_INTERIM, "running")
+xwalk_ssc_desc_4_rr_grp_netgrp = StringIO(
+    """scc_description_level_4,rr_group,rr_netgrp
+    Line Haul Locomotives: Class I Operations,Class I,Freight
+    Line Haul Locomotives: Class I Operations,Class I,Industrial
+    Line Haul Locomotives: Class II / III Operations,Class III,Freight
+    Line Haul Locomotives: Class II / III Operations,Class III,Industrial
+    Line Haul Locomotives: Passenger Trains (Amtrak),Passenger,Freight
+    Line Haul Locomotives: Commuter Lines,Commuter,Freight
+    Line Haul Locomotives: Commuter Lines,Commuter,Industrial
+    Yard Locomotives,Commuter,Yard
+    Yard Locomotives,Class I,Yard
+    Yard Locomotives,Class III,Yard
+""")
 
 
 def connect_to_server_db(database_nm, user_nm="root"):

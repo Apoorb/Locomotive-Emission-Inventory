@@ -8,6 +8,7 @@ from locoerlt.utilis import (
     PATH_PROCESSED,
     get_out_file_tsmp,
     cleanup_prev_output,
+    xwalk_ssc_desc_4_rr_grp_netgrp
 )
 
 
@@ -71,6 +72,9 @@ def project_filt_fuel_consump(
                 "rr_netgrp",
                 "rr_group",
                 "link_fuel_consmp",
+                "yardname",
+                "start_lat",
+                "start_long"
             ]
         )
         .rename(columns={"link_fuel_consmp": "link_fuel_consmp_2019"})
@@ -94,21 +98,52 @@ def merge_cnty_nm_to_fuel_proj(
     Add county names to the fuel consumption dataset.
     """
     fuel_consump_prj_by_cnty_ = (
-        fuel_consump_prj_
+        fuel_consump_prj_.assign(
+            yardname_v1=lambda df: np.select(
+                [
+                    df.rr_netgrp == "Yard",
+                    df.rr_netgrp == "Freight",
+                    df.rr_netgrp == "Industrial"
+                ],
+                [df.yardname, -99, -99],
+                -9999,
+            ),
+            start_lat=lambda df: np.select(
+                [
+                    df.rr_netgrp == "Yard",
+                    df.rr_netgrp == "Freight",
+                    df.rr_netgrp == "Industrial"
+                ],
+                [df.start_lat, -99, -99],
+                -9999,
+            ),
+            start_long=lambda df: np.select(
+                [
+                    df.rr_netgrp == "Yard",
+                    df.rr_netgrp == "Freight",
+                    df.rr_netgrp == "Industrial"
+                ],
+                [df.start_long, -99, -99],
+                -9999,
+            ),
+        )
         .groupby(
             [
                 "year",
                 "stcntyfips",
                 "carrier",
                 "friylab",
+                "yardname_v1",
                 "rr_netgrp",
                 "rr_group",
             ]
         )
         .agg(
-            county_carr_friy_fuel_consmp_by_yr=(
+            county_carr_friy_yardnm_fuel_consmp_by_yr=(
                 "link_fuel_consmp_by_yr", "sum"),
-            county_carr_friy_miles_by_yr=("miles", "sum"),
+            county_carr_friy_yardnm_miles_by_yr=("miles", "sum"),
+            start_lat=("start_lat", "first"),
+            start_long=("start_long", "first"),
         )
         .reset_index()
         .merge(county_df_fil_, on="stcntyfips", how="outer")
@@ -118,24 +153,11 @@ def merge_cnty_nm_to_fuel_proj(
 
 def add_scc_desc_to_fuel_proj_cnty(
     fuel_consump_prj_by_cnty_: pd.DataFrame,
+    xwalk_ssc_desc_4_rr_grp_netgrp=xwalk_ssc_desc_4_rr_grp_netgrp
 ) -> pd.DataFrame:
     """
     Add EPA SCC description to fuel consumption + county name + Projection data.
     """
-    xwalk_ssc_desc_4_rr_grp_netgrp = StringIO(
-        """scc_description_level_4,rr_group,rr_netgrp
-        Line Haul Locomotives: Class I Operations,Class I,Freight
-        Line Haul Locomotives: Class II / III Operations,Class III,Freight
-        Line Haul Locomotives: Passenger Trains (Amtrak),Passenger,Freight
-        Line Haul Locomotives: Commuter Lines,Commuter,Freight
-        Yard Locomotives,Class I,Industrial
-        Yard Locomotives,Class III,Industrial
-        Yard Locomotives,Commuter,Industrial
-        Yard Locomotives,Class I,Yard
-        Yard Locomotives,Class III,Yard
-        Yard Locomotives,Commuter,Yard
-    """
-    )
     xwalk_ssc_desc_4_rr_grp_netgrp_df_ = pd.read_csv(
         xwalk_ssc_desc_4_rr_grp_netgrp, sep=","
     ).assign(scc_description_level_4=lambda df: df.scc_description_level_4.str.strip())
@@ -197,7 +219,7 @@ def get_emis_quant(
         )
         .assign(
             em_quant=lambda df: df.em_fac
-            * df.county_carr_friy_fuel_consmp_by_yr,
+            * df.county_carr_friy_yardnm_fuel_consmp_by_yr,
             year=lambda df: df.year.astype("Int32"),
         )
         .drop(columns=["anals_yr", "em_units"])
@@ -216,6 +238,7 @@ def get_emis_quant(
                 "scc_description_level_3",
                 "scc",
                 "scc_description_level_4",
+                "yardname_v1",
                 "pol_type",
                 "pollutant",
                 "pol_desc",
@@ -224,13 +247,15 @@ def get_emis_quant(
         .agg(
             em_fac=("em_fac", "mean"),
             em_quant=("em_quant", "sum"),
-            county_carr_friy_fuel_consmp_by_yr=(
-                "county_carr_friy_fuel_consmp_by_yr",
+            county_carr_friy_yardnm_fuel_consmp_by_yr=(
+                "county_carr_friy_yardnm_fuel_consmp_by_yr",
                 "sum",
             ),
-            county_carr_friy_miles_by_yr=(
-                "county_carr_friy_miles_by_yr", "sum"
+            county_carr_friy_yardnm_miles_by_yr=(
+                "county_carr_friy_yardnm_miles_by_yr", "sum"
             ),
+            start_lat=("start_lat", "first"),
+            start_long=("start_long", "first"),
         )
         .reset_index()
     )

@@ -36,7 +36,7 @@ def preprc_link(
     ),
     filter_st=("TX",),
     filter_rrgrp=("Freight", "Industrial", "Yard"),
-    map_friylab={"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"},
+    map_friylab={"Freight": "Fcat", "Industrial": "Fcat", "Yard": "IYcat"},
 ) -> pd.DataFrame:
     """
     Pre-process national rail link data.
@@ -55,8 +55,8 @@ def preprc_link(
     filter_rrgrp:
         Rail road groups that need to be included in this study.
     map_friylab:
-        Line haul fuel consumption only uses freight and yard
-        switching fuel consumption uses yard and industrial networks.
+        Line haul fuel consumption  uses freight and industrial networks.
+        and yard switching fuel consumption uses yard network.
     Returns
     -------
     pd.DataFrame

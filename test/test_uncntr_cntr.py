@@ -60,7 +60,8 @@ def test_controlled_emis_quant(
     us_ton_to_grams = 907185
     test_emisquant = get_emis_quant_agg.merge(
         get_cntr_emisquant,
-        on=["year", "stcntyfips", "scc_description_level_4", "pollutant"],
+        on=["year", "stcntyfips", "scc_description_level_4", "yardname_v1",
+            "pollutant"],
         how="outer",
         suffixes=["_pre", "_post"],
     )
@@ -102,7 +103,8 @@ def test_uncontrolled_emis_quant(
     us_ton_to_grams = 907185
     test_emisquant = get_emis_quant_agg.merge(
         get_uncntr_emisquant,
-        on=["year", "stcntyfips", "scc_description_level_4", "pollutant"],
+        on=["year", "stcntyfips", "scc_description_level_4", "yardname_v1",
+            "pollutant"],
         how="outer",
         suffixes=["_pre", "_post"],
     )

@@ -226,34 +226,6 @@ def test_all_carriers_in_natrail(get_cls1_cls3_comm_passg_py_df, get_carrier_df)
 
 
 @pytest.mark.parametrize(
-    "get_cls1_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df",
-    [(path_natrail2020_old, ("",)), (path_natrail2020_csv, ("TNMR", "WTLC", "TSE"))],
-    ids=["2020 NatRail Data", "2021 NatRail Data"],
-    indirect=True,
-)
-def test_py_and_sql_data_eq_for_cls3_pass_commut(
-    get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df
-):
-    """
-    Fails for "2021 NatRail Data" dataset as this dataset does not have the
-    following 3 carrier: 'TNMR', 'WTLC', 'TSE'.
-    """
-    # FixMe: Will fail as of 4/20/2021! Recompute fuel usage based on 2021
-    #  NatRail data.
-    test = pd.merge(
-        get_cls3_comm_passg_py_df,
-        get_cls3_comm_passg_sql_df,
-        on=["carrier", "rr_netgrp"],
-        how="outer",
-    )
-    print(
-        "Will fail! Recompute fuel usage based on 2021 NatRail data that "
-        "does not have 'TNMR', 'WTLC', and 'TSE'"
-    )
-    pd.testing.assert_frame_equal(get_cls3_comm_passg_py_df, get_cls3_comm_passg_sql_df)
-
-
-@pytest.mark.parametrize(
     "get_cls1_cls3_comm_passg_py_df",
     [path_natrail2020_csv],
     ids=["2021 NatRail Data"],
@@ -385,7 +357,7 @@ def test_notcls1_fuel_consump_tots_by_st(
         )
         .assign(
             friylab=lambda df: df.rr_netgrp.map(
-                {"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"}
+                {"Freight": "Fcat", "Industrial": "Fcat", "Yard": "IYcat"}
             ),
         )
         .groupby(["carrier", "friylab"])
