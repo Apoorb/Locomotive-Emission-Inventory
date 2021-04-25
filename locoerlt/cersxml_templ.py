@@ -174,6 +174,7 @@ def create_pollutant_complexes_in_tti_output_not_in_erg(
 
 def modify_payload(
     templ_root_: xml.etree.ElementTree.Element,
+    tti_pol_list_=list
 ) -> xml.etree.ElementTree.Element:
 
     templ_root_payload = templ_root_.find("header:Payload", ns)
@@ -216,8 +217,8 @@ def modify_payload(
     )
     annual_pollutant_elements = annual_o3d_pol_dict["annual_pollutant_elements"]
     txerr_pols = set(map(lambda elem: elem.text, annual_pollutant_elements))
-    missing_tti_pollutants = txerr_pols - tti_pol_list
-    extra_tti_pollutants = tti_pol_list - txerr_pols
+    missing_tti_pollutants = txerr_pols - tti_pol_list_
+    extra_tti_pollutants = tti_pol_list_ - txerr_pols
     set_all_emissions_to_zero(
         templ_root_payload_cers_loc_locemprc_=templ_root_payload_cers_loc_locemprc,
         ns_=ns,
@@ -270,16 +271,10 @@ def print_child(
 
 
 if __name__ == "__main__":
-    path_uncntr_emisquant = glob.glob(
-        os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")
+    path_emis_rate = glob.glob(
+        os.path.join(PATH_INTERIM, f"emission_factor_[" f"0-9]*-*-*.csv")
     )[0]
-
-    path_cntr_emisquant = glob.glob(
-        os.path.join(PATH_PROCESSED, "cntr_emis_quant_[0-9]*-*-*.csv")
-    )[0]
-    uncntr_emisquant = pd.read_csv(path_uncntr_emisquant, index_col=0)
-    cntr_emisquant = pd.read_csv(path_cntr_emisquant, index_col=0)
-    tti_pol_list = set(uncntr_emisquant.pollutant.unique())
+    tti_pol_list = set(pd.read_csv(path_emis_rate).pollutant.unique())
     path_dir_templ = os.path.join(PATH_RAW, "ERG")
     path_templ = os.path.join(path_dir_templ, "rail2020-Uncontrolled.xml")
     path_out_templ = os.path.join(PATH_INTERIM, "xml_rail_templ_tti.xml")
@@ -295,5 +290,6 @@ if __name__ == "__main__":
     print(templ_root.attrib)
     templ_root_header = modify_template_header(templ_root_=templ_root)
     print_xml_lines(tree_elem=templ_root, max_lines=20)
-    modify_payload(templ_root_=templ_root)
+    modify_payload(templ_root_=templ_root,
+                   tti_pol_list_=tti_pol_list)
     templ_tree.write(path_out_templ)
