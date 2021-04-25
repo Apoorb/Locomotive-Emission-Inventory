@@ -197,15 +197,15 @@ def get_deri_uncontrolled_quant(
     )
 
     uncontrolled_emis_quant_deri_1 = (
-        uncontrolled_emis_quant_deri.merge(region_county_yard_count, on=["region"]
-                                           ,how="left")
-        .assign(
-            nox_red_tons_per_yr_per_county_per_yard=lambda df: df.nox_red_tons_per_yr_per_region
-                                                               / df.no_counties_yards
+        uncontrolled_emis_quant_deri.merge(
+            region_county_yard_count, on=["region"], how="left"
         )
         .assign(
-            nox_red_tons_per_yr_per_county_per_yard=lambda df: df
-                .nox_red_tons_per_yr_per_county_per_yard.fillna(
+            nox_red_tons_per_yr_per_county_per_yard=lambda df: df.nox_red_tons_per_yr_per_region
+            / df.no_counties_yards
+        )
+        .assign(
+            nox_red_tons_per_yr_per_county_per_yard=lambda df: df.nox_red_tons_per_yr_per_county_per_yard.fillna(
                 0
             ),
             em_quant_ton=lambda df: df.em_quant / us_ton_to_grams,
@@ -214,7 +214,9 @@ def get_deri_uncontrolled_quant(
             ),
         )
     )
-    assert_deri_tot(uncontrolled_emis_quant_deri_1, "nox_red_tons_per_yr_per_county_per_yard")
+    assert_deri_tot(
+        uncontrolled_emis_quant_deri_1, "nox_red_tons_per_yr_per_county_per_yard"
+    )
     return uncontrolled_emis_quant_deri_1
 
 

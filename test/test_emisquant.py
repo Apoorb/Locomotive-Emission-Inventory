@@ -7,8 +7,13 @@ import pytest
 import glob
 import pandas as pd
 import numpy as np
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, \
-    get_out_file_tsmp, xwalk_ssc_desc_4_rr_grp_netgrp
+from locoerlt.utilis import (
+    PATH_RAW,
+    PATH_INTERIM,
+    PATH_PROCESSED,
+    get_out_file_tsmp,
+    xwalk_ssc_desc_4_rr_grp_netgrp,
+)
 from locoerlt.emisquant import process_proj_fac
 from locoerlt.fuelcsmp import preprc_fuelusg, preprc_link
 from test.test_emisrt import get_nox_pm10_pm25_voc_epa_em_fac, hap_speciation
@@ -151,7 +156,12 @@ def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
         get_emis_quant.groupby(
             ["year", "stcntyfips", "carrier", "scc_description_level_4", "pollutant"]
         )
-        .agg(county_carr_friy_yardnm_miles_by_yr=("county_carr_friy_yardnm_miles_by_yr", "sum"))
+        .agg(
+            county_carr_friy_yardnm_miles_by_yr=(
+                "county_carr_friy_yardnm_miles_by_yr",
+                "sum",
+            )
+        )
         .reset_index()
     )
 
@@ -484,4 +494,3 @@ def test_all_year_present(get_emis_quant_agg_across_carriers):
         == (2050 - 2011) + 1
     )
     assert are_there_40_years_in_each_group
-

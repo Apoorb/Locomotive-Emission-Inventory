@@ -34,7 +34,8 @@ xwalk_ssc_desc_4_rr_grp_netgrp = StringIO(
     Yard Locomotives,Commuter,Yard
     Yard Locomotives,Class I,Yard
     Yard Locomotives,Class III,Yard
-""")
+"""
+)
 
 
 def connect_to_server_db(database_nm, user_nm="root"):
