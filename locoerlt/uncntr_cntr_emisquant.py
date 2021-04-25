@@ -197,7 +197,8 @@ def get_deri_uncontrolled_quant(
     )
 
     uncontrolled_emis_quant_deri_1 = (
-        uncontrolled_emis_quant_deri.merge(region_county_yard_count, on=["region"])
+        uncontrolled_emis_quant_deri.merge(region_county_yard_count, on=["region"]
+                                           ,how="left")
         .assign(
             nox_red_tons_per_yr_per_county_per_yard=lambda df: df.nox_red_tons_per_yr_per_region
                                                                / df.no_counties_yards
