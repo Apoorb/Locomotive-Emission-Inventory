@@ -19,3 +19,4 @@ xlrd
 openpyxl
 pytest
 pyshp
+lxml
