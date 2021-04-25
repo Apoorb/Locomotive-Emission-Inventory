@@ -113,6 +113,15 @@ def get_annual_o3d_pollutants_erg(
     }
 
 
+def set_all_emissions_to_zero(
+        templ_root_payload_cers_loc_locemprc_: xml.etree.ElementTree.Element,
+        ns_: dict
+):
+    for totemis in (templ_root_payload_cers_loc_locemprc_
+                    .findall(".//payload:TotalEmissions", ns)):
+        totemis.text = "0"
+
+
 def delete_pollutant_complexes_not_in_tti_output(
     missing_tti_pollutants: list,
     templ_root_payload_cers_: xml.etree.ElementTree.Element,
@@ -225,6 +234,11 @@ def modify_payload(
     txerr_pols = set(map(lambda elem: elem.text, annual_pollutant_elements))
     missing_tti_pollutants = txerr_pols - tti_pol_list
     extra_tti_pollutants = tti_pol_list - txerr_pols
+    set_all_emissions_to_zero(
+        templ_root_payload_cers_loc_locemprc_
+        =templ_root_payload_cers_loc_locemprc,
+        ns_=ns
+    )
     delete_pollutant_complexes_not_in_tti_output(
         missing_tti_pollutants=missing_tti_pollutants,
         templ_root_payload_cers_=templ_root_payload_cers
@@ -301,4 +315,5 @@ if __name__ == "__main__":
     print(templ_root.attrib)
     templ_root_header = modify_template_header(templ_root_=templ_root)
     print_xml_lines(tree_elem=templ_root, max_lines=20)
+    modify_payload(templ_root_=templ_root)
     templ_tree.write(path_out_templ)
