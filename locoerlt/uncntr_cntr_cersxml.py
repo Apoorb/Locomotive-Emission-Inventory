@@ -1,9 +1,6 @@
 import os
-import xml
 import xml.etree.ElementTree as ET
 from lxml import etree as lxml_etree
-import time
-import datetime
 import glob
 import copy
 import pandas as pd
@@ -306,6 +303,7 @@ def write_xml(xml_tree, path_out_xml):
         parser=lxml_etree.XMLParser(remove_blank_text=True, remove_comments=True),
     )
     lxml_etree_root.write(path_out_xml, pretty_print=True)
+    os.remove(path_out_dirty_xml)
 
 
 if __name__ == "__main__":
@@ -319,12 +317,6 @@ if __name__ == "__main__":
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
     path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx.xml")
     path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx.xml")
-
-    templ_tree = ET.parse(path_xml_templ)
-    ns = {
-        "header": "http://www.exchangenetwork.net/schema/header/2",
-        "payload": "http://www.exchangenetwork.net/schema/cer/1",
-    }
     tx_counties = pd.read_csv(path_county)
     tx_counties_list = list(
         tx_counties.rename(columns=get_snake_case_dict(tx_counties.columns))
