@@ -234,6 +234,12 @@ if __name__ == "__main__":
     path_out_uncntr_pat = os.path.join(
         PATH_PROCESSED, f"uncntr_emis_quant_[0-9]*-*-*.csv"
     )
+    path_txled_prc_out = os.path.join(
+        PATH_PROCESSED, "txled_factors_by_county_prc.csv"
+    )
+    path_deri_prc_out = os.path.join(
+        PATH_PROCESSED, "deri_factors_by_county_prc.csv"
+    )
     cleanup_prev_output(path_out_uncntr_pat)
     path_out_uncntr = os.path.join(PATH_PROCESSED, f"uncntr_emis_quant_{st}.csv")
     path_out_cntr_pat = os.path.join(PATH_PROCESSED, f"cntr_emis_quant_[0-9]*-*-*.csv")
@@ -245,7 +251,7 @@ if __name__ == "__main__":
         path_txled_counties_=path_txled_counties,
         path_texas_counties_=path_texas_counties,
     )
-
+    txled_fac.to_csv(path_txled_prc_out)
     controlled_emis_quant = get_controlled_txled(
         emis_quant_agg_=emis_quant_agg, txled_fac_=txled_fac
     )
@@ -254,7 +260,7 @@ if __name__ == "__main__":
         path_deri_loco_regions_=path_deri_loco_regions,
         path_deri_loco_nox_red_yr_=path_deri_loco_nox_red_yr,
     )
-
+    deri_loco_nox_red_yr_prcd_emis_quant_region.to_csv(path_deri_prc_out)
     uncontrolled_emis_quant_deri = get_deri_uncontrolled_quant(
         emis_quant_agg_=emis_quant_agg,
         deri_loco_nox_red_yr_prcd_emis_quant_region_=deri_loco_nox_red_yr_prcd_emis_quant_region,
