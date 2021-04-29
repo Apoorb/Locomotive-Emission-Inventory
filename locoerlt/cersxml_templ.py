@@ -173,8 +173,7 @@ def create_pollutant_complexes_in_tti_output_not_in_erg(
 
 
 def modify_payload(
-    templ_root_: xml.etree.ElementTree.Element,
-    tti_pol_list_=list
+    templ_root_: xml.etree.ElementTree.Element, tti_pol_list_=list
 ) -> xml.etree.ElementTree.Element:
 
     templ_root_payload = templ_root_.find("header:Payload", ns)
@@ -290,6 +289,5 @@ if __name__ == "__main__":
     print(templ_root.attrib)
     templ_root_header = modify_template_header(templ_root_=templ_root)
     print_xml_lines(tree_elem=templ_root, max_lines=20)
-    modify_payload(templ_root_=templ_root,
-                   tti_pol_list_=tti_pol_list)
+    modify_payload(templ_root_=templ_root, tti_pol_list_=tti_pol_list)
     templ_tree.write(path_out_templ)
