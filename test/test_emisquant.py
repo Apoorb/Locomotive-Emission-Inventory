@@ -213,7 +213,7 @@ def test_state_fuel_totals(
     )
 
 
-def test_county_control_tot_cls1(
+def test_county_control_tot_not_equal_due_to_indus_addition_to_freight_cls1(
     get_emis_quant_agg_across_carriers, get_county_cls1_prop_input
 ):
     get_emis_quant_agg_across_carriers[
@@ -234,7 +234,7 @@ def test_county_control_tot_cls1(
     get_emis_quant_agg_cls1_test = get_emis_quant_agg_cls1.merge(
         cnt_pct, on="stcntyfips"
     )
-    assert np.allclose(
+    assert not np.allclose(
         get_emis_quant_agg_cls1_test.CountyPCT, get_emis_quant_agg_cls1_test.countypct
     )
 

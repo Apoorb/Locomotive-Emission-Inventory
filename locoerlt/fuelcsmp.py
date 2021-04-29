@@ -36,7 +36,7 @@ def preprc_link(
     ),
     filter_st=("TX",),
     filter_rrgrp=("Freight", "Industrial", "Yard"),
-    map_friylab={"Freight": "Fcat", "Industrial": "Fcat", "Yard": "IYcat"},
+    map_friylab={"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"},
 ) -> pd.DataFrame:
     """
     Pre-process national rail link data.
