@@ -108,6 +108,45 @@ def get_county_cls1_prop_input():
     return cls1_cntpct
 
 
+def test_fuel_consump_in_emis_quant_vs_input(
+    get_emis_quant_agg_across_carriers, get_fuel_consump
+):
+    get_emis_quant_agg_across_carriers_county_scc = (
+        get_emis_quant_agg_across_carriers
+        .loc[lambda df: (df.year == 2019) & (df.pollutant == "CO")]
+        .groupby(["stcntyfips","scc_description_level_4"])
+        .agg(county_scc_fuel_consump=(
+            'county_carr_friy_yardnm_fuel_consmp_by_yr', "sum"))
+        .reset_index()
+        .sort_values(["stcntyfips","scc_description_level_4"])
+        .reset_index(drop=True)
+    )
+
+    get_fuel_consump_county_scc = (
+        get_fuel_consump
+        .merge(
+            xwalk_ssc_desc_4_rr_grp_netgrp_df_,
+            on=['rr_group', 'rr_netgrp']
+        )
+        .groupby(["stcntyfips","scc_description_level_4"])
+        .agg(county_scc_fuel_consump = ('link_fuel_consmp', "sum"))
+        .reset_index()
+        .sort_values(["stcntyfips", "scc_description_level_4"])
+        .reset_index(drop=True)
+    )
+
+    test_data = pd.merge(
+        get_emis_quant_agg_across_carriers_county_scc,
+        get_fuel_consump_county_scc,
+        on = ["stcntyfips", "scc_description_level_4"],
+        suffixes=["_post", "_pre"]
+    )
+
+    assert np.allclose(test_data.county_scc_fuel_consump_post,
+                test_data.county_scc_fuel_consump_pre)
+
+
+
 def test_cls1_2017county_fuel_consmp_with_ertac(
     get_emis_quant_agg_across_carriers, get_ertac_2017_df
 ):
