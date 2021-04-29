@@ -15,8 +15,9 @@ def set_document_id(
     templ_root_.set("id", doc_id)
 
 
-def set_creation_datetime(templ_root_header_: xml.etree.ElementTree.Element, ns
-                          ) -> None:
+def set_creation_datetime(
+    templ_root_header_: xml.etree.ElementTree.Element, ns
+) -> None:
     creation_datetime = templ_root_header_.find("header:CreationDateTime", ns)
     ts = time.time()
     st = datetime.datetime.fromtimestamp(ts).strftime("%Y-%m-%dT%H:%M:%S")
@@ -24,8 +25,7 @@ def set_creation_datetime(templ_root_header_: xml.etree.ElementTree.Element, ns
 
 
 def set_data_cat_prop(
-    templ_root_header_: xml.etree.ElementTree.Element, ns,
-        data_cat_value_text="Nonroad"
+    templ_root_header_: xml.etree.ElementTree.Element, ns, data_cat_value_text="Nonroad"
 ) -> None:
     data_cat_prop = templ_root_header_.find(
         "./header:Property/[header:PropertyName='DataCategory']", ns
@@ -35,8 +35,7 @@ def set_data_cat_prop(
 
 
 def modify_template_header(
-    templ_root_: xml.etree.ElementTree.Element,
-    ns
+    templ_root_: xml.etree.ElementTree.Element, ns
 ) -> xml.etree.ElementTree.Element:
     templ_root_header_ = templ_root_.find("header:Header", ns)
     set_creation_datetime(templ_root_header_=templ_root_header_, ns=ns)
@@ -176,7 +175,7 @@ def create_pollutant_complexes_in_tti_output_not_in_erg(
 
 
 def modify_payload(
-    templ_root_: xml.etree.ElementTree.Element, tti_pol_list_:list, ns:dict
+    templ_root_: xml.etree.ElementTree.Element, tti_pol_list_: list, ns: dict
 ) -> xml.etree.ElementTree.Element:
 
     templ_root_payload = templ_root_.find("header:Payload", ns)

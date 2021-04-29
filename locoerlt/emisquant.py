@@ -7,7 +7,7 @@ from locoerlt.utilis import (
     PATH_PROCESSED,
     get_out_file_tsmp,
     cleanup_prev_output,
-    xwalk_ssc_desc_4_rr_grp_netgrp
+    xwalk_ssc_desc_4_rr_grp_netgrp,
 )
 
 
@@ -23,27 +23,20 @@ def process_proj_fac(
     Return projection factors by railroad groups.
     """
     x1 = pd.ExcelFile(path_proj_fac_)
-    freight_proj_fac = (
-        x1.parse("Recommended_Proj", skiprows=1, usecols=["Year", "Freight"])
-        .rename(columns={"Year": "year", "Freight": "proj_fac"})
-    )
-    pass_commute_proj_fac = (
-        x1.parse("Recommended_Proj", skiprows=1, usecols=["Year", "Passenger"])
-        .rename(columns={"Year": "year", "Passenger": "proj_fac"}))
+    freight_proj_fac = x1.parse(
+        "Recommended_Proj", skiprows=1, usecols=["Year", "Freight"]
+    ).rename(columns={"Year": "year", "Freight": "proj_fac"})
+    pass_commute_proj_fac = x1.parse(
+        "Recommended_Proj", skiprows=1, usecols=["Year", "Passenger"]
+    ).rename(columns={"Year": "year", "Passenger": "proj_fac"})
 
-    freight_proj_fac_1 = (
-        freight_proj_fac
-        .assign(rr_group=[freight_rr_group] * len(freight_proj_fac))
-        .explode("rr_group")
-    )
+    freight_proj_fac_1 = freight_proj_fac.assign(
+        rr_group=[freight_rr_group] * len(freight_proj_fac)
+    ).explode("rr_group")
 
-    pass_commute_proj_fac_1 = (
-        pass_commute_proj_fac
-        .assign(
-            rr_group=[pass_commut_rr_group] * len(pass_commute_proj_fac)
-        )
-        .explode("rr_group")
-    )
+    pass_commute_proj_fac_1 = pass_commute_proj_fac.assign(
+        rr_group=[pass_commut_rr_group] * len(pass_commute_proj_fac)
+    ).explode("rr_group")
     proj_fac_ = pd.concat([freight_proj_fac_1, pass_commute_proj_fac_1])
     return proj_fac_
 
@@ -55,10 +48,8 @@ def process_county(county_df_: pd.DataFrame) -> pd.DataFrame:
     https://gis-txdot.opendata.arcgis.com/datasets/texas-county-boundaries
     /data?geometry=-133.426%2C24.483%2C-66.673%2C37.611
     """
-    county_df_fil_ = (
-        county_df_.filter(items=["CNTY_NM", "FIPS_ST_CNTY_CD"])
-        .rename(columns={
-            "CNTY_NM": "county_name", "FIPS_ST_CNTY_CD": "stcntyfips"})
+    county_df_fil_ = county_df_.filter(items=["CNTY_NM", "FIPS_ST_CNTY_CD"]).rename(
+        columns={"CNTY_NM": "county_name", "FIPS_ST_CNTY_CD": "stcntyfips"}
     )
     return county_df_fil_
 
@@ -83,7 +74,7 @@ def project_filt_fuel_consump(
                 "link_fuel_consmp",
                 "yardname",
                 "start_lat",
-                "start_long"
+                "start_long",
             ]
         )
         .rename(columns={"link_fuel_consmp": "link_fuel_consmp_2019"})
@@ -93,8 +84,7 @@ def project_filt_fuel_consump(
         .explode("year")
         .merge(proj_fac_, on=["rr_group", "year"], how="outer")
         .assign(
-            link_fuel_consmp_by_yr=lambda df: (df.proj_fac *
-                                               df.link_fuel_consmp_2019),
+            link_fuel_consmp_by_yr=lambda df: (df.proj_fac * df.link_fuel_consmp_2019),
             year=lambda df: df.year.astype(int),
         )
     )
@@ -108,13 +98,12 @@ def merge_cnty_nm_to_fuel_proj(
     Add county names to the fuel consumption dataset.
     """
     fuel_consump_prj_by_cnty_ = (
-        fuel_consump_prj_
-        .assign(
+        fuel_consump_prj_.assign(
             yardname_v1=lambda df: np.select(
                 [
                     df.rr_netgrp == "Yard",
                     df.rr_netgrp == "Freight",
-                    df.rr_netgrp == "Industrial"
+                    df.rr_netgrp == "Industrial",
                 ],
                 [df.yardname, -99, -99],
                 -9999,
@@ -123,7 +112,7 @@ def merge_cnty_nm_to_fuel_proj(
                 [
                     df.rr_netgrp == "Yard",
                     df.rr_netgrp == "Freight",
-                    df.rr_netgrp == "Industrial"
+                    df.rr_netgrp == "Industrial",
                 ],
                 [df.start_lat, -99, -99],
                 -9999,
@@ -132,7 +121,7 @@ def merge_cnty_nm_to_fuel_proj(
                 [
                     df.rr_netgrp == "Yard",
                     df.rr_netgrp == "Freight",
-                    df.rr_netgrp == "Industrial"
+                    df.rr_netgrp == "Industrial",
                 ],
                 [df.start_long, -99, -99],
                 -9999,
@@ -150,8 +139,7 @@ def merge_cnty_nm_to_fuel_proj(
             ]
         )
         .agg(
-            county_carr_friy_yardnm_fuel_consmp_by_yr=(
-                "link_fuel_consmp_by_yr", "sum"),
+            county_carr_friy_yardnm_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"),
             county_carr_friy_yardnm_miles_by_yr=("miles", "sum"),
             start_lat=("start_lat", "first"),
             start_long=("start_long", "first"),
@@ -164,45 +152,48 @@ def merge_cnty_nm_to_fuel_proj(
 
 def add_scc_desc_to_fuel_proj_cnty(
     fuel_consump_prj_by_cnty_: pd.DataFrame,
-    xwalk_ssc_desc_4_rr_grp_netgrp=xwalk_ssc_desc_4_rr_grp_netgrp
+    xwalk_ssc_desc_4_rr_grp_netgrp=xwalk_ssc_desc_4_rr_grp_netgrp,
 ) -> pd.DataFrame:
     """
     Add EPA SCC description to fuel consumption + county name + Projection data.
     """
-    xwalk_ssc_desc_4_rr_grp_netgrp_df_ = (
-        pd.read_csv(xwalk_ssc_desc_4_rr_grp_netgrp, sep=",")
-        .assign(scc_description_level_4=lambda df: (
-            df.scc_description_level_4.str.strip())
-        )
+    xwalk_ssc_desc_4_rr_grp_netgrp_df_ = pd.read_csv(
+        xwalk_ssc_desc_4_rr_grp_netgrp, sep=","
+    ).assign(
+        scc_description_level_4=lambda df: (df.scc_description_level_4.str.strip())
     )
 
-    assert (set(fuel_consump_prj_by_cnty_.loc[lambda df: (
-        df.rr_group
-        == "Passenger"), "rr_netgrp"].unique()) == {"Freight"}), (
+    assert set(
+        fuel_consump_prj_by_cnty_.loc[
+            lambda df: (df.rr_group == "Passenger"), "rr_netgrp"
+        ].unique()
+    ) == {"Freight"}, (
         "Above mapping does not consider Amtrak on industrial leads and "
         "yards. This is inline with how fuel consumption is coded for Amtrak."
     )
 
-    assert (set(fuel_consump_prj_by_cnty_.loc[lambda df: (
-        (df.rr_group == "Commuter") & (df.carrier == "DART")),
-        "rr_netgrp"].unique()) == {'Freight'}), (
+    assert set(
+        fuel_consump_prj_by_cnty_.loc[
+            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "DART")),
+            "rr_netgrp",
+        ].unique()
+    ) == {"Freight"}, (
         "Above mapping does not consider DART on industrial leads and "
-        "yards. This is inline with how fuel consumption is coded for DART.")
+        "yards. This is inline with how fuel consumption is coded for DART."
+    )
 
-    assert (set(fuel_consump_prj_by_cnty_.loc[lambda df: (
-            (df.rr_group == "Commuter") & (df.carrier == "TREX")),
-            "rr_netgrp"].unique()) == {
-               'Freight', 'Industrial', 'Yard'}), (
+    assert set(
+        fuel_consump_prj_by_cnty_.loc[
+            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "TREX")),
+            "rr_netgrp",
+        ].unique()
+    ) == {"Freight", "Industrial", "Yard"}, (
         "Above mapping considers TREX on Freight, industrial leads, and "
-        "yards. This is inline with how fuel consumption is coded for TREX.")
+        "yards. This is inline with how fuel consumption is coded for TREX."
+    )
 
-    fuel_consump_prj_by_cnty_scc_ = (
-        fuel_consump_prj_by_cnty_
-        .merge(
-            xwalk_ssc_desc_4_rr_grp_netgrp_df_,
-            on=["rr_group", "rr_netgrp"],
-            how="outer"
-        )
+    fuel_consump_prj_by_cnty_scc_ = fuel_consump_prj_by_cnty_.merge(
+        xwalk_ssc_desc_4_rr_grp_netgrp_df_, on=["rr_group", "rr_netgrp"], how="outer"
     )
     return fuel_consump_prj_by_cnty_scc_
 
@@ -271,7 +262,8 @@ def get_emis_quant(
                 "sum",
             ),
             county_carr_friy_yardnm_miles_by_yr=(
-                "county_carr_friy_yardnm_miles_by_yr", "sum"
+                "county_carr_friy_yardnm_miles_by_yr",
+                "sum",
             ),
             start_lat=("start_lat", "first"),
             start_long=("start_long", "first"),
@@ -284,21 +276,16 @@ def get_emis_quant(
 
 if __name__ == "__main__":
     st = get_out_file_tsmp()
-    path_fuel_consump = os.path.join(PATH_INTERIM,
-                                     f"fuelconsump_2019_tx_{st}.csv")
-    path_emis_rt = os.path.join(PATH_INTERIM,
-                                f"emission_factor_{st}.csv")
-    path_proj_fac = os.path.join(PATH_INTERIM,
-                                 "Projection Factors 04132021.xlsx")
+    path_fuel_consump = os.path.join(PATH_INTERIM, f"fuelconsump_2019_tx_{st}.csv")
+    path_emis_rt = os.path.join(PATH_INTERIM, f"emission_factor_{st}.csv")
+    path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
-    path_out_emisquant = os.path.join(PATH_PROCESSED,
-                                      f"emis_quant_loco_{st}.csv")
+    path_out_emisquant = os.path.join(PATH_PROCESSED, f"emis_quant_loco_{st}.csv")
     path_out_emisquant_agg = os.path.join(
         PATH_PROCESSED, f"emis_quant_loco_agg" f"_{st}.csv"
     )
 
-    path_out_emisquant_pat = os.path.join(PATH_PROCESSED,
-                                          f"emis_quant_loco_*-*-*.csv")
+    path_out_emisquant_pat = os.path.join(PATH_PROCESSED, f"emis_quant_loco_*-*-*.csv")
     cleanup_prev_output(path_out_emisquant_pat)
 
     fuel_consump = pd.read_csv(path_fuel_consump, index_col=0)
