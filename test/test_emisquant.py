@@ -256,6 +256,7 @@ def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
                 "rr_netgrp",
                 "rr_group",
                 "scc_description_level_4",
+                "yardname_v1",
                 "pollutant",
                 "em_quant_2019",
             ]
@@ -271,6 +272,7 @@ def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
                 "rr_netgrp",
                 "rr_group",
                 "scc_description_level_4",
+                "yardname_v1",
                 "pollutant",
             ],
         )
@@ -278,6 +280,13 @@ def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
         .merge(get_proj_fac, on=["year", "rr_group"], how="left")
         .dropna(subset=["proj_fac_calc"])
     )
+
+    mask = ~ np.isclose(
+        np.round(co2_nh3_co_emis_with_2019.proj_fac_calc, 5),
+        np.round(co2_nh3_co_emis_with_2019.proj_fac, 5),
+    )
+    test  = co2_nh3_co_emis_with_2019[mask]
+
     assert np.allclose(
         np.round(co2_nh3_co_emis_with_2019.proj_fac_calc, 5),
         np.round(co2_nh3_co_emis_with_2019.proj_fac, 5),
@@ -488,7 +497,7 @@ def test_all_year_present(get_emis_quant_agg_across_carriers):
     are_there_40_years_in_each_group = all(
         (
             get_emis_quant_agg_across_carriers.groupby(
-                ["county_name", "scc", "pollutant"]
+                ["county_name", "scc", "yardname_v1", "pollutant"]
             ).year.count()
         ).values
         == (2050 - 2011) + 1
