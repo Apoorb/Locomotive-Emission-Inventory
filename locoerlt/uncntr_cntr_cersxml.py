@@ -7,7 +7,9 @@ import datetime
 import glob
 import copy
 import pandas as pd
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
+from locoerlt.utilis import (PATH_RAW, PATH_INTERIM, PATH_PROCESSED,
+                             get_snake_case_dict)
+from locoerlt.cersxml_templ import (set_creation_datetime, set_document_id)
 
 
 def qc_clean_up_uncntr_emisquant(uncntr_emisquant, uncntr_emisquant_no_yardnm):
@@ -208,12 +210,17 @@ def get_uncntr_cntr_xml(
     pol_ton_daily_col: str,
     tx_counties_list,
     non_point_scc_list,
+    doc_id
 ):
     templ_tree = ET.parse(path_xml_templ)
     ns = {
         "header": "http://www.exchangenetwork.net/schema/header/2",
         "payload": "http://www.exchangenetwork.net/schema/cer/1",
     }
+    templ_root = templ_tree.getroot()
+    templ_root_header = templ_root.find("header:Header", ns)
+    set_document_id(templ_root, doc_id=doc_id)
+    set_creation_datetime(templ_root_header, ns=ns)
     cers_template = templ_tree.find(".//payload:Location/...", ns)
     location_template = templ_tree.find(".//payload:Location", ns)
     location_template_cpy = copy.deepcopy(location_template)
@@ -372,15 +379,17 @@ if __name__ == "__main__":
         pol_ton_daily_col="uncontrolled_em_quant_ton_daily_str",
         tx_counties_list=tx_counties_list,
         non_point_scc_list=non_point_scc_list,
+        doc_id="locomotives_uncntr_cers_aerr_2020_xml"
     )
     write_xml(xml_tree=uncntr_xml_tree, path_out_xml=path_out_uncntr)
 
     cntr_xml_tree = get_uncntr_cntr_xml(
         path_xml_templ=path_xml_templ,
         grp_uncntr_cntr=cntr_emisquant_2020_fil_scc_grp,
-        pol_ton_col="ccontrolled_em_quant_ton_str",
+        pol_ton_col="controlled_em_quant_ton_str",
         pol_ton_daily_col="controlled_em_quant_ton_daily_str",
         tx_counties_list=tx_counties_list,
         non_point_scc_list=non_point_scc_list,
+        doc_id="locomotives_cntr_cers_aerr_2020_xml"
     )
     write_xml(xml_tree=cntr_xml_tree, path_out_xml=path_out_cntr)
