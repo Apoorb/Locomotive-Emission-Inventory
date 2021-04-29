@@ -166,7 +166,7 @@ def get_deri_uncontrolled_quant(
     emis_quant_agg_: pd.DataFrame,
     deri_loco_nox_red_yr_prcd_emis_quant_region_: pd.DataFrame,
     us_ton_to_grams=907185,
-) -> pd.DataFrame:
+) -> dict:
     """"""
     uncontrolled_emis_quant_deri = emis_quant_agg_.assign(
         tp_county_nm=lambda df: df.county_name.str.lower().str.strip(),
@@ -217,7 +217,35 @@ def get_deri_uncontrolled_quant(
     assert_deri_tot(
         uncontrolled_emis_quant_deri_1, "nox_red_tons_per_yr_per_county_per_yard"
     )
-    return uncontrolled_emis_quant_deri_1
+
+    deri_emis_red_by_yard_summary = uncontrolled_emis_quant_deri_1.loc[
+        lambda df: (df.nox_red_tons_per_yr_per_county_per_yard != 0),
+        [
+            "year",
+            "region",
+            "no_counties_yards",
+            "stcntyfips",
+            "county_name",
+            "sector_description",
+            "scc_description_level_1",
+            "scc_description_level_2",
+            "scc_description_level_3",
+            "scc",
+            "scc_description_level_4",
+            "yardname_v1",
+            "pol_type",
+            "pollutant",
+            "pol_desc",
+            "start_lat",
+            "start_long",
+            "nox_red_tons_per_yr_per_region",
+            "nox_red_tons_per_yr_per_county_per_yard",
+        ],
+    ].sort_values(by=["year", "region", "stcntyfips", "yardname_v1"])
+    return {
+        "uncontrolled_emis_quant_deri_1": uncontrolled_emis_quant_deri_1,
+        "deri_emis_red_by_yard_summary": deri_emis_red_by_yard_summary,
+    }
 
 
 if __name__ == "__main__":
@@ -234,12 +262,8 @@ if __name__ == "__main__":
     path_out_uncntr_pat = os.path.join(
         PATH_PROCESSED, f"uncntr_emis_quant_[0-9]*-*-*.csv"
     )
-    path_txled_prc_out = os.path.join(
-        PATH_PROCESSED, "txled_factors_by_county_prc.csv"
-    )
-    path_deri_prc_out = os.path.join(
-        PATH_PROCESSED, "deri_factors_by_county_prc.csv"
-    )
+    path_txled_prc_out = os.path.join(PATH_PROCESSED, "txled_factors_by_county_prc.csv")
+    path_deri_prc_out = os.path.join(PATH_PROCESSED, "deri_factors_by_county_prc.csv")
     cleanup_prev_output(path_out_uncntr_pat)
     path_out_uncntr = os.path.join(PATH_PROCESSED, f"uncntr_emis_quant_{st}.csv")
     path_out_cntr_pat = os.path.join(PATH_PROCESSED, f"cntr_emis_quant_[0-9]*-*-*.csv")
@@ -260,11 +284,18 @@ if __name__ == "__main__":
         path_deri_loco_regions_=path_deri_loco_regions,
         path_deri_loco_nox_red_yr_=path_deri_loco_nox_red_yr,
     )
-    deri_loco_nox_red_yr_prcd_emis_quant_region.to_csv(path_deri_prc_out)
-    uncontrolled_emis_quant_deri = get_deri_uncontrolled_quant(
+    uncontrolled_emis_quant_deri_dict = get_deri_uncontrolled_quant(
         emis_quant_agg_=emis_quant_agg,
         deri_loco_nox_red_yr_prcd_emis_quant_region_=deri_loco_nox_red_yr_prcd_emis_quant_region,
     )
+    uncontrolled_emis_quant_deri = uncontrolled_emis_quant_deri_dict[
+        "uncontrolled_emis_quant_deri_1"
+    ]
+
+    deri_emis_red_by_yard_summary = uncontrolled_emis_quant_deri_dict[
+        "deri_emis_red_by_yard_summary"
+    ]
+    deri_emis_red_by_yard_summary.to_csv(path_deri_prc_out)
 
     uncontrolled_emis_quant_deri.to_csv(path_out_uncntr)
     controlled_emis_quant.to_csv(path_out_cntr)
