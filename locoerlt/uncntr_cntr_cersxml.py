@@ -269,7 +269,6 @@ def get_uncntr_cntr_xml(
                         ns,
                     )
                 )
-
                 for (
                     reportingperiodemission
                 ) in reportingperiod_daily_reportingperiodemissions:
@@ -286,9 +285,10 @@ def get_uncntr_cntr_xml(
                     cur_pollutant_emission.text = replace_value
             except KeyError:
                 pass
-            location_template_cpy_cpy.append(locationemissionsprocess_template_cpy_cpy)
-            cers_template.append(location_template_cpy_cpy)
-        return templ_tree
+            location_template_cpy_cpy.append(
+                locationemissionsprocess_template_cpy_cpy)
+        cers_template.append(location_template_cpy_cpy)
+    return templ_tree
 
 
 def write_xml(xml_tree, path_out_xml):
