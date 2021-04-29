@@ -1,16 +1,14 @@
 """
 Develop emission rate table for expected list of pollutants.
 """
-import time
-import datetime
-import os
 import numpy as np
 import inflection
 import pandas as pd
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
 from locoerlt.utilis import (
-    PATH_RAW,
     PATH_INTERIM,
-    PATH_PROCESSED,
     get_out_file_tsmp,
     cleanup_prev_output,
 )

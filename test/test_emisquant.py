@@ -146,8 +146,7 @@ def test_fuel_consump_in_emis_quant_vs_input(
                 test_data.county_scc_fuel_consump_pre)
 
 
-
-def test_cls1_2017county_fuel_consmp_with_ertac(
+def test_cls1_2017county_fuel_consmp_not_equal_with_ertac(
     get_emis_quant_agg_across_carriers, get_ertac_2017_df
 ):
     get_emis_quant_agg_cls1_fri_17 = (
@@ -187,7 +186,12 @@ def test_cls1_2017county_fuel_consmp_with_ertac(
         )
     )
     get_emis_quant_agg_cls1_fri_17_ertac.to_excel(path_out_qaqc_ertac)
-    assert all(get_emis_quant_agg_cls1_fri_17_ertac.per_dif_tti_ertac.dropna() < 2.18)
+    assert all((
+                   get_emis_quant_agg_cls1_fri_17_ertac
+                   .loc[lambda df: df.per_dif_tti_ertac > 0,
+                        "per_dif_tti_ertac"]
+                   .dropna()
+               ) >= 2.17)
 
 
 def test_milemx_tot(get_emis_quant, get_prc_nat_rail):

@@ -1,4 +1,3 @@
-import os
 import xml
 import xml.etree.ElementTree as ET
 import time
@@ -6,7 +5,10 @@ import datetime
 import glob
 import copy
 import pandas as pd
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED
+import os
+import sys
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+from locoerlt.utilis import PATH_RAW, PATH_INTERIM
 
 
 def set_document_id(
