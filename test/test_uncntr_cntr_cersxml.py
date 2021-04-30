@@ -6,12 +6,15 @@ import pytest
 from lxml import etree as lxml_etree
 import glob
 import pandas as pd
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
+from locoerlt.utilis import (PATH_RAW, PATH_INTERIM, PATH_PROCESSED,
+                             get_snake_case_dict)
 from locoerlt.uncntr_cntr_cersxml import (
     clean_up_cntr_emisquant,
     clean_up_uncntr_emisquant,
 )
 
+path_erg_cntr = os.path.join(PATH_RAW, "ERG", "rail2020-controlled-v2.xml")
+path_erg_uncntr = os.path.join(PATH_RAW, "ERG", "rail2020-Uncontrolled.xml")
 path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx.xml")
 path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx.xml")
 path_uncntr_emisquant = glob.glob(
@@ -20,6 +23,7 @@ path_uncntr_emisquant = glob.glob(
 path_cntr_emisquant = glob.glob(
     os.path.join(PATH_PROCESSED, "cntr_emis_quant_[0-9]*-*-*.csv")
 )[0]
+path_erg_tti_comp = os.path.join(PATH_PROCESSED, "tti_erg_statewide_comp.xlsx")
 
 
 path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
@@ -195,3 +199,63 @@ def test_uncntr_input_output_data_equal():
         test_data_o3d.uncontrolled_em_quant_ton_daily_str_in.astype(float),
         test_data_o3d.uncontrolled_em_quant_ton_daily_str_xml.astype(float),
     ), "Input not equal to output. Check the xml creation."
+
+
+def test_cntr_tti_erg_values():
+    erg_cntr_tree = ET.parse(path_erg_cntr)
+    erg_annual_o3d_dict = get_annual_o3d_emissions_df_from_xml(
+        templ_tree=erg_cntr_tree,
+        pol_tot_em_ton_col_nm="controlled_em_quant_ton_str",
+        pol_tot_em_daily_ton_col_nm="controlled_em_quant_ton_daily_str",
+    )
+
+    tti_cntr_tree = ET.parse(path_out_cntr)
+    tti_annual_o3d_dict = get_annual_o3d_emissions_df_from_xml(
+        templ_tree=tti_cntr_tree,
+        pol_tot_em_ton_col_nm="controlled_em_quant_ton_str",
+        pol_tot_em_daily_ton_col_nm="controlled_em_quant_ton_daily_str",
+    )
+
+    erg_annual_by_state = (
+        erg_annual_o3d_dict["annual_df"]
+        .assign(controlled_em_quant_ton=lambda df:
+        df.controlled_em_quant_ton_str.astype(float))
+        .groupby(['ssc_str', 'pollutant_str'])
+        .controlled_em_quant_ton.sum()
+        .reset_index()
+    )
+
+    tti_annual_by_state = (
+        tti_annual_o3d_dict["annual_df"]
+        .assign(controlled_em_quant_ton=lambda df: (
+            df.controlled_em_quant_ton_str.astype(float))
+            )
+        .groupby(['ssc_str', 'pollutant_str'])
+        .controlled_em_quant_ton.sum()
+        .reset_index()
+    )
+
+    erg_tti_annual_by_state = (
+        pd.merge(
+            erg_annual_by_state,
+            tti_annual_by_state,
+            on=['ssc_str', 'pollutant_str'],
+            suffixes=["_erg", "_tti"],
+            how="outer"
+        )
+        .assign(
+            per_tti_erg_em_quant_diff=lambda df: 100 * (
+                df.controlled_em_quant_ton_tti - df.controlled_em_quant_ton_erg)
+            / df.controlled_em_quant_ton_erg
+        )
+    )
+    erg_tti_annual_by_state.to_excel(path_erg_tti_comp)
+
+    erg_tti_annual_by_state_fil = (
+        erg_tti_annual_by_state
+        .dropna(subset=["per_tti_erg_em_quant_diff"])
+        .loc[lambda df: df.pollutant_str.isin([
+            "CO", "CO2", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"])]
+    )
+
+
