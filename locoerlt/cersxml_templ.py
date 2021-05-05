@@ -273,6 +273,12 @@ def print_child(
         counter_ += 1
 
 
+def register_all_namespaces(filename):
+    namespaces = dict([node for _, node in ET.iterparse(filename, events=['start-ns'])])
+    for ns in namespaces:
+        ET.register_namespace(ns, namespaces[ns])
+
+
 if __name__ == "__main__":
     path_emis_rate = glob.glob(
         os.path.join(PATH_INTERIM, f"emission_factor_[" f"0-9]*-*-*.csv")
@@ -281,9 +287,10 @@ if __name__ == "__main__":
     path_dir_templ = os.path.join(PATH_RAW, "ERG")
     path_templ = os.path.join(path_dir_templ, "rail2020-Uncontrolled.xml")
     path_out_templ = os.path.join(PATH_INTERIM, "xml_rail_templ_tti.xml")
+    register_all_namespaces(path_templ)
     templ_tree = ET.parse(path_templ)
     templ_root = templ_tree.getroot()
-    print_xml_lines(tree_elem=templ_root, max_lines=20)
+    print_xml_lines(tree_elem=templ_root, max_lines=40)
     ns = {
         "header": "http://www.exchangenetwork.net/schema/header/2",
         "payload": "http://www.exchangenetwork.net/schema/cer/1",
@@ -292,6 +299,6 @@ if __name__ == "__main__":
     set_document_id(templ_root_=templ_root)
     print(templ_root.attrib)
     templ_root_header = modify_template_header(templ_root_=templ_root, ns=ns)
-    print_xml_lines(tree_elem=templ_root, max_lines=20)
+    print_xml_lines(tree_elem=templ_root, max_lines=40)
     modify_payload(templ_root_=templ_root, tti_pol_list_=tti_pol_list, ns=ns)
-    templ_tree.write(path_out_templ)
+    templ_tree.write(path_out_templ, encoding='utf-8', xml_declaration=True)
