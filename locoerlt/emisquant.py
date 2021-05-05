@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 from locoerlt.utilis import (
     PATH_RAW,
     PATH_INTERIM,
@@ -74,9 +75,6 @@ def project_filt_fuel_consump(
                 "rr_netgrp",
                 "rr_group",
                 "link_fuel_consmp",
-                "yardname",
-                "start_lat",
-                "start_long",
             ]
         )
         .rename(columns={"link_fuel_consmp": "link_fuel_consmp_2019"})
@@ -100,42 +98,12 @@ def merge_cnty_nm_to_fuel_proj(
     Add county names to the fuel consumption dataset.
     """
     fuel_consump_prj_by_cnty_ = (
-        fuel_consump_prj_.assign(
-            yardname_v1=lambda df: np.select(
-                [
-                    df.rr_netgrp == "Yard",
-                    df.rr_netgrp == "Freight",
-                    df.rr_netgrp == "Industrial",
-                ],
-                [df.yardname, -99, -99],
-                -9999,
-            ),
-            start_lat=lambda df: np.select(
-                [
-                    df.rr_netgrp == "Yard",
-                    df.rr_netgrp == "Freight",
-                    df.rr_netgrp == "Industrial",
-                ],
-                [df.start_lat, -99, -99],
-                -9999,
-            ),
-            start_long=lambda df: np.select(
-                [
-                    df.rr_netgrp == "Yard",
-                    df.rr_netgrp == "Freight",
-                    df.rr_netgrp == "Industrial",
-                ],
-                [df.start_long, -99, -99],
-                -9999,
-            ),
-        )
-        .groupby(
+        fuel_consump_prj_.groupby(
             [
                 "year",
                 "stcntyfips",
                 "carrier",
                 "friylab",
-                "yardname_v1",
                 "rr_netgrp",
                 "rr_group",
             ]
@@ -143,8 +111,6 @@ def merge_cnty_nm_to_fuel_proj(
         .agg(
             county_carr_friy_yardnm_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"),
             county_carr_friy_yardnm_miles_by_yr=("miles", "sum"),
-            start_lat=("start_lat", "first"),
-            start_long=("start_long", "first"),
         )
         .reset_index()
         .merge(county_df_fil_, on="stcntyfips", how="outer")
@@ -174,22 +140,28 @@ def add_scc_desc_to_fuel_proj_cnty(
         "yards. This is inline with how fuel consumption is coded for Amtrak."
     )
 
-    assert set(
-        fuel_consump_prj_by_cnty_.loc[
-            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "DART")),
-            "rr_netgrp",
-        ].unique()
-    ) == {"Freight"}, (
+    assert (
+        set(
+            fuel_consump_prj_by_cnty_.loc[
+                lambda df: ((df.rr_group == "Commuter") & (df.carrier == "DART")),
+                "rr_netgrp",
+            ].unique()
+        )
+        == {"Freight"}
+    ), (
         "Above mapping does not consider DART on industrial leads and "
         "yards. This is inline with how fuel consumption is coded for DART."
     )
 
-    assert set(
-        fuel_consump_prj_by_cnty_.loc[
-            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "TREX")),
-            "rr_netgrp",
-        ].unique()
-    ) == {"Freight", "Industrial", "Yard"}, (
+    assert (
+        set(
+            fuel_consump_prj_by_cnty_.loc[
+                lambda df: ((df.rr_group == "Commuter") & (df.carrier == "TREX")),
+                "rr_netgrp",
+            ].unique()
+        )
+        == {"Freight", "Industrial", "Yard"}
+    ), (
         "Above mapping considers TREX on Freight, industrial leads, and "
         "yards. This is inline with how fuel consumption is coded for TREX."
     )
@@ -222,6 +194,7 @@ def get_emis_quant(
     fuel_consump_prj_by_cnty_scc_ = add_scc_desc_to_fuel_proj_cnty(
         fuel_consump_prj_by_cnty_
     )
+
     emis_quant_ = (
         fuel_consump_prj_by_cnty_scc_.merge(
             emis_rt_,
@@ -250,7 +223,6 @@ def get_emis_quant(
                 "scc_description_level_3",
                 "scc",
                 "scc_description_level_4",
-                "yardname_v1",
                 "pol_type",
                 "pollutant",
                 "pol_desc",
@@ -267,8 +239,6 @@ def get_emis_quant(
                 "county_carr_friy_yardnm_miles_by_yr",
                 "sum",
             ),
-            start_lat=("start_lat", "first"),
-            start_long=("start_long", "first"),
         )
         .reset_index()
     )
