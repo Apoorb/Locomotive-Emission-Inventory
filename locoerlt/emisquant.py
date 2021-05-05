@@ -172,6 +172,11 @@ def add_scc_desc_to_fuel_proj_cnty(
     return fuel_consump_prj_by_cnty_scc_
 
 
+def distr_yard_fuel_usage_by_ertac_2017_yard_vals():
+    """Distribute Yard fuel usage at county level to different yards using
+    the ertac data."""
+    ...
+
 def get_emis_quant(
     path_fuel_consump_: str,
     path_emis_rt_: str,
