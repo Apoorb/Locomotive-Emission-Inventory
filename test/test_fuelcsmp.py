@@ -357,7 +357,7 @@ def test_notcls1_fuel_consump_tots_by_st(
         )
         .assign(
             friylab=lambda df: df.rr_netgrp.map(
-                {"Freight": "Fcat", "Industrial": "Fcat", "Yard": "IYcat"}
+                {"Freight": "Fcat", "Industrial": "IYcat", "Yard": "IYcat"}
             ),
         )
         .groupby(["carrier", "friylab"])

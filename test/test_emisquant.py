@@ -108,12 +108,13 @@ def get_county_cls1_prop_input():
     return cls1_cntpct
 
 
-def test_fuel_consump_in_emis_quant_vs_input(
+def test_fuel_consump_in_emis_quant_vs_input_except_yards(
     get_emis_quant_agg_across_carriers, get_fuel_consump
 ):
     get_emis_quant_agg_across_carriers_county_scc = (
         get_emis_quant_agg_across_carriers.loc[
             lambda df: (df.year == 2019) & (df.pollutant == "CO")
+                       & (df.scc_description_level_4 != "Yard Locomotives")
         ]
         .groupby(["stcntyfips", "scc_description_level_4"])
         .agg(
@@ -128,6 +129,7 @@ def test_fuel_consump_in_emis_quant_vs_input(
         get_fuel_consump.merge(
             xwalk_ssc_desc_4_rr_grp_netgrp_df_, on=["rr_group", "rr_netgrp"]
         )
+        .loc[lambda df: (df.scc_description_level_4 != "Yard Locomotives")]
         .groupby(["stcntyfips", "scc_description_level_4"])
         .agg(county_scc_fuel_consump=("link_fuel_consmp", "sum"))
         .reset_index()
@@ -259,7 +261,7 @@ def test_state_fuel_totals(
     )
 
 
-def test_county_control_tot_not_equal_due_to_indus_addition_to_freight_cls1(
+def test_county_control_tot_equal_to_freight_cls1(
     get_emis_quant_agg_across_carriers, get_county_cls1_prop_input
 ):
     get_emis_quant_agg_across_carriers[
@@ -280,7 +282,7 @@ def test_county_control_tot_not_equal_due_to_indus_addition_to_freight_cls1(
     get_emis_quant_agg_cls1_test = get_emis_quant_agg_cls1.merge(
         cnt_pct, on="stcntyfips"
     )
-    assert not np.allclose(
+    assert np.allclose(
         get_emis_quant_agg_cls1_test.CountyPCT, get_emis_quant_agg_cls1_test.countypct
     )
 
@@ -288,9 +290,16 @@ def test_county_control_tot_not_equal_due_to_indus_addition_to_freight_cls1(
 def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
     # CO2, NH3, and CO have constant rates, so we can get the projection
     # factors from the emission rates for these pollutants.
-    co2_nh3_co = get_emis_quant.loc[
+    co2_nh3_co = (
+        get_emis_quant.loc[
         lambda df: (df.pollutant.isin(["CO2", "NH3", "CO"]))
-    ]
+            & (df.scc_description_level_4 != "Yard Locomotives")
+        ]
+        .assign(
+            carrier=lambda df: df.carrier.fillna(-99),
+            rr_group=lambda df: df.rr_group.fillna(-99),
+        )
+    )
     co2_nh3_co_emis_2019 = (
         co2_nh3_co.loc[lambda df: df.year == 2019]
         .drop(columns="year")
