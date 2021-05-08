@@ -205,7 +205,8 @@ def distr_yard_fuel_usage_by_ertac_2017_yard_vals(
 ):
     """Distribute Yard fuel usage at county level to different yards using
     the ertac data. This function is a later addition, that's why it's not
-    well integrated with the logic."""
+    well integrated with the logic. We are not incorporating ERTAC yards
+    where NARL do data."""
     fuel_consump_prj_by_cnty_scc_not_yards = (
         fuel_consump_prj_by_cnty_scc_.loc[
             lambda df: df.scc_description_level_4 != "Yard Locomotives"

@@ -108,11 +108,6 @@ def get_county_cls1_prop_input():
     return cls1_cntpct
 
 
-def test_ertac_tx_fips_matches_tti_fips():
-    ...
-    # TODO: Write Test
-
-
 def test_fuel_consump_in_emis_quant_vs_input_except_yards(
     get_emis_quant_agg_across_carriers, get_fuel_consump
 ):
