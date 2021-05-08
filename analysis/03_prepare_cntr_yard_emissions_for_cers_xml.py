@@ -28,7 +28,7 @@ cntr_emisquant_yards_2020 = (
     .filter(items=["stcntyfips", "county_name", "scc_description_level_4",
                    "eis_facility_id", "yardname_v1", "pollutant",
                    "site_latitude", "site_longitude",
-                   "uncontrolled_em_quant_ton"])
+                   "controlled_em_quant_ton"])
     .rename(columns={
         "stcntyfips": "StateAndCountyFIPSCode",
         "eis_facility_id": "EISFacilitySiteIdentifier",
@@ -83,7 +83,7 @@ cntr_emisquant_yards_emisssions_a = (
         ReportingPeriodTypeCode="A",
         EmissionOperatingTypeCode="code_not_found_on_epa",
         PollutantCode=lambda df: df.pollutant,
-        TotalEmissions=lambda df: df.uncontrolled_em_quant_ton,
+        TotalEmissions=lambda df: df.controlled_em_quant_ton,
         EmissionsUnitofMeasureCode="TON",
         EmissionCalculationMethodCode="8"
     )
@@ -101,7 +101,7 @@ cntr_emisquant_yards_emisssions_o3d = (
         ReportingPeriodTypeCode="O3D",
         EmissionOperatingTypeCode="code_not_found_on_epa",
         PollutantCode=lambda df: df.pollutant,
-        TotalEmissions=lambda df: df.uncontrolled_em_quant_ton / 365,
+        TotalEmissions=lambda df: df.controlled_em_quant_ton / 365,
         EmissionsUnitofMeasureCode="TON",
         EmissionCalculationMethodCode="8"
     )
