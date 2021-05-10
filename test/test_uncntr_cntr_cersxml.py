@@ -2,8 +2,6 @@ import os
 import xml
 import xml.etree.ElementTree as ET
 import numpy as np
-import pytest
-from lxml import etree as lxml_etree
 import glob
 import pandas as pd
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict

@@ -417,8 +417,7 @@ if __name__ == "__main__":
 
     fuel_consump = pd.read_csv(path_fuel_consump, index_col=0)
 
-    path_ertac_2017 = os.path.join(PATH_INTERIM,
-                                   "imputed_ertac_yard_2017.xlsx")
+    path_ertac_2017 = os.path.join(PATH_INTERIM, "imputed_ertac_yard_2017.xlsx")
 
     prc_ertac_2017_yard_vals(
         path_ertac_2017_=path_ertac_2017, fuel_consump_=fuel_consump
