@@ -2,6 +2,7 @@
 Tests emisrt module.
 """
 import os
+import glob
 import pytest
 import pandas as pd
 import numpy as np
@@ -26,7 +27,8 @@ path_nox_pm10_hc_epa_em_fac = os.path.join(
 )
 
 # Output emission factors path.
-path_emis_rate = os.path.join(PATH_INTERIM, f"emission_factor_{st}.csv")
+path_emis_rate = glob.glob(os.path.join(PATH_INTERIM,
+                                        f"emission_factor_*.csv"))[0]
 
 
 @pytest.fixture()
