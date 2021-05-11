@@ -65,8 +65,6 @@ def set_yard_uncntr_cntr_xml(
         )
     )
     cursor = conn.cursor()
-    facilitysite = pd.read_sql("""SELECT * FROM FacilitySite""", conn)
-    emissiosns = pd.read_sql("""SELECT *  FROM Emissions""", conn)
     uncntr_or_cntr_emisquant = pd.read_csv(path_uncntr_cntr_emisquant_)
     yard_prcs = pd.read_excel(path_yard_prcs_)
     uncntr_cntr_emisquant_yards_2020 = (
