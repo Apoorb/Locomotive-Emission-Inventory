@@ -22,7 +22,7 @@ def set_yard_uncntr_cntr_xml(
     uncntr_or_cntr_emisquant_nonpoint_2020 = (
         uncntr_or_cntr_emisquant.loc[
             lambda df: (df.scc_description_level_4 != "Yard Locomotives")
-                       & (df.year == 2020)
+            & (df.year == 2020)
         ]
         .filter(
             items=[
@@ -49,10 +49,7 @@ def set_yard_uncntr_cntr_xml(
     conn.close()
 
 
-def set_emissiosn_yard_xml(uncntr_or_cntr_emisquant_nonpoint_2020_,
-                           conn_,
-                           cursor_
-                           ):
+def set_emissiosn_yard_xml(uncntr_or_cntr_emisquant_nonpoint_2020_, conn_, cursor_):
     emissiosns_cols = [
         "StateAndCountyFIPSCode",
         "SourceClassificationCode",
@@ -63,21 +60,19 @@ def set_emissiosn_yard_xml(uncntr_or_cntr_emisquant_nonpoint_2020_,
         "EmissionCalculationMethodCode",
     ]
     uncntr_or_cntr_emisquant_nonpoint_emisssions_a = (
-        uncntr_or_cntr_emisquant_nonpoint_2020_
-        .assign(
+        uncntr_or_cntr_emisquant_nonpoint_2020_.assign(
             ReportingPeriodTypeCode="A",
             PollutantCode=lambda df: df.pollutant,
             TotalEmissions=lambda df: df.TotalEmissions,
             EmissionsUnitofMeasureCode="TON",
             EmissionCalculationMethodCode="8",
-        )
-        .filter(items=emissiosns_cols)
+        ).filter(items=emissiosns_cols)
     )
     uncntr_or_cntr_emisquant_nonpoint_emisssions_o3d = (
-        uncntr_or_cntr_emisquant_nonpoint_2020_
-        .loc[lambda df: df.pollutant.isin(
-            ["CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
-        )
+        uncntr_or_cntr_emisquant_nonpoint_2020_.loc[
+            lambda df: df.pollutant.isin(
+                ["CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
+            )
         ]
         .assign(
             ReportingPeriodTypeCode="O3D",
@@ -90,8 +85,10 @@ def set_emissiosn_yard_xml(uncntr_or_cntr_emisquant_nonpoint_2020_,
     )
 
     uncntr_or_cntr_emisquant_nonpoint_emisssions = pd.concat(
-        [uncntr_or_cntr_emisquant_nonpoint_emisssions_a,
-         uncntr_or_cntr_emisquant_nonpoint_emisssions_o3d]
+        [
+            uncntr_or_cntr_emisquant_nonpoint_emisssions_a,
+            uncntr_or_cntr_emisquant_nonpoint_emisssions_o3d,
+        ]
     ).reset_index(drop=True)
     cursor_.execute("DELETE * FROM Emissions")
     conn_.commit()
@@ -99,10 +96,9 @@ def set_emissiosn_yard_xml(uncntr_or_cntr_emisquant_nonpoint_2020_,
               VALUES (?,?,?,?,?,?,?) """.format(
         ",".join(emissiosns_cols)
     )
-    cursor_.executemany(sql,
-                        uncntr_or_cntr_emisquant_nonpoint_emisssions
-                        .itertuples(index=False)
-                        )
+    cursor_.executemany(
+        sql, uncntr_or_cntr_emisquant_nonpoint_emisssions.itertuples(index=False)
+    )
     conn_.commit()
 
 
@@ -114,9 +110,7 @@ if __name__ == "__main__":
         os.path.join(PATH_PROCESSED, "cntr_emis_quant_[0-9]*-*-*.csv")
     )[0]
     path_uncntr_nonpoint_brgtool = os.path.join(
-        PATH_PROCESSED,
-        "eis_stagging_tables",
-        "nonpoint_bridgetool_uncntr.accdb"
+        PATH_PROCESSED, "eis_stagging_tables", "nonpoint_bridgetool_uncntr.accdb"
     )
     path_cntr_nonpoint_brgtool = os.path.join(
         PATH_PROCESSED, "eis_stagging_tables", "nonpoint_bridgetool_cntr.accdb"

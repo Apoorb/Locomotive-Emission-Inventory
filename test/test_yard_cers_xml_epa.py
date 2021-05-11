@@ -6,6 +6,7 @@ import numpy as np
 import glob
 import pandas as pd
 from locoerlt.utilis import PATH_PROCESSED
+
 path_uncntr_emisquant = glob.glob(
     os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")
 )[0]
@@ -49,9 +50,7 @@ def get_annual_o3d_emissions_df_from_xml(
     for fac_site in fac_site_elem_list:
         eis_fac_id = fac_site.find(".//payload:FacilitySiteIdentifier", ns)
         fips_elem = fac_site.find(".//payload:StateAndCountyFIPSCode", ns)
-        unit_em_prc = fac_site.find(
-            ".//payload:UnitEmissionsProcess", ns
-        )
+        unit_em_prc = fac_site.find(".//payload:UnitEmissionsProcess", ns)
         annual_pol_code_list = unit_em_prc.findall(
             ".//payload:ReportingPeriod"
             "/[payload:ReportingPeriodTypeCode='A']"
@@ -69,13 +68,12 @@ def get_annual_o3d_emissions_df_from_xml(
         for annual_pol_code_elem, annual_pol_tot_em_elem in zip(
             annual_pol_code_list, annual_pol_tot_em_list
         ):
-            annual_dict["stcntyfips"].append(
-                int(fips_elem.text))
-            annual_dict["eis_fac_id"].append(
-                int(eis_fac_id.text))
+            annual_dict["stcntyfips"].append(int(fips_elem.text))
+            annual_dict["eis_fac_id"].append(int(eis_fac_id.text))
             annual_dict["pollutant"].append(annual_pol_code_elem.text)
             annual_dict[pol_tot_em_ton_col_nm].append(
-                float(annual_pol_tot_em_elem.text))
+                float(annual_pol_tot_em_elem.text)
+            )
 
         o3d_pol_code_list = unit_em_prc.findall(
             ".//payload:ReportingPeriod"
@@ -95,12 +93,12 @@ def get_annual_o3d_emissions_df_from_xml(
         for o3d_pol_code_elem, o3d_pol_tot_em_elem in zip(
             o3d_pol_code_list, o3d_pol_tot_em_list
         ):
-            o3d_dict["stcntyfips"].append(
-                int(fips_elem.text))
+            o3d_dict["stcntyfips"].append(int(fips_elem.text))
             o3d_dict["eis_fac_id"].append(int(eis_fac_id.text))
             o3d_dict["pollutant"].append(o3d_pol_code_elem.text)
             o3d_dict[pol_tot_em_daily_ton_col_nm].append(
-                float(o3d_pol_tot_em_elem.text))
+                float(o3d_pol_tot_em_elem.text)
+            )
     annual_df = pd.DataFrame(annual_dict)
     o3d_df = pd.DataFrame(o3d_dict)
     return {"annual_df": annual_df, "o3d_df": o3d_df}
@@ -117,20 +115,24 @@ def test_uncntr_input_output_data_equal():
     o3d_df = annual_o3d_dict["o3d_df"]
     uncntr_emisquant = pd.read_csv(path_uncntr_emisquant)
     uncntr_emisquant_yard_2020 = (
-        uncntr_emisquant
-        .loc[
-            lambda df: (df.scc_description_level_4 == 'Yard Locomotives')
+        uncntr_emisquant.loc[
+            lambda df: (df.scc_description_level_4 == "Yard Locomotives")
             & (df.year == 2020)
         ]
         .rename(columns={"eis_facility_id": "eis_fac_id"})
         .assign(
-            uncontrolled_em_quant_ton_daily=lambda df:
-            df.uncontrolled_em_quant_ton /365
+            uncontrolled_em_quant_ton_daily=lambda df: df.uncontrolled_em_quant_ton
+            / 365
         )
-        .filter(items=[
-            'stcntyfips', 'eis_fac_id', 'pollutant',
-            'uncontrolled_em_quant_ton', 'uncontrolled_em_quant_ton_daily'
-        ])
+        .filter(
+            items=[
+                "stcntyfips",
+                "eis_fac_id",
+                "pollutant",
+                "uncontrolled_em_quant_ton",
+                "uncontrolled_em_quant_ton_daily",
+            ]
+        )
     )
 
     test_data_annual = pd.merge(
@@ -149,10 +151,10 @@ def test_uncntr_input_output_data_equal():
 
     assert np.allclose(
         test_data_annual.uncontrolled_em_quant_ton_in,
-        test_data_annual.uncontrolled_em_quant_ton_xml
+        test_data_annual.uncontrolled_em_quant_ton_xml,
     ) & np.allclose(
         test_data_o3d.uncontrolled_em_quant_ton_daily_in,
-        test_data_o3d.uncontrolled_em_quant_ton_daily_xml
+        test_data_o3d.uncontrolled_em_quant_ton_daily_xml,
     ), "Input not equal to output. Check the xml creation."
 
 
@@ -167,20 +169,23 @@ def test_cntr_input_output_data_equal():
     o3d_df = annual_o3d_dict["o3d_df"]
     cntr_emisquant = pd.read_csv(path_cntr_emisquant)
     cntr_emisquant_yard_2020 = (
-        cntr_emisquant
-        .loc[
-            lambda df: (df.scc_description_level_4 == 'Yard Locomotives')
+        cntr_emisquant.loc[
+            lambda df: (df.scc_description_level_4 == "Yard Locomotives")
             & (df.year == 2020)
         ]
         .rename(columns={"eis_facility_id": "eis_fac_id"})
         .assign(
-            controlled_em_quant_ton_daily=lambda df:
-            df.controlled_em_quant_ton /365
+            controlled_em_quant_ton_daily=lambda df: df.controlled_em_quant_ton / 365
         )
-        .filter(items=[
-            'stcntyfips', 'eis_fac_id', 'pollutant',
-            'controlled_em_quant_ton', 'controlled_em_quant_ton_daily'
-        ])
+        .filter(
+            items=[
+                "stcntyfips",
+                "eis_fac_id",
+                "pollutant",
+                "controlled_em_quant_ton",
+                "controlled_em_quant_ton_daily",
+            ]
+        )
     )
 
     test_data_annual = pd.merge(
@@ -199,8 +204,8 @@ def test_cntr_input_output_data_equal():
 
     assert np.allclose(
         test_data_annual.controlled_em_quant_ton_in,
-        test_data_annual.controlled_em_quant_ton_xml
+        test_data_annual.controlled_em_quant_ton_xml,
     ) & np.allclose(
         test_data_o3d.controlled_em_quant_ton_daily_in,
-        test_data_o3d.controlled_em_quant_ton_daily_xml
+        test_data_o3d.controlled_em_quant_ton_daily_xml,
     ), "Input not equal to output. Check the xml creation."
