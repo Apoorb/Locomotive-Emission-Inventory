@@ -1,15 +1,11 @@
+import pytest
 import os
 import xml
 import xml.etree.ElementTree as ET
 import numpy as np
 import glob
 import pandas as pd
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
-from locoerlt.uncntr_cntr_cersxml import (
-    clean_up_cntr_emisquant,
-    clean_up_uncntr_emisquant,
-)
-
+from locoerlt.utilis import PATH_PROCESSED
 path_uncntr_emisquant = glob.glob(
     os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")
 )[0]
@@ -22,6 +18,7 @@ path_uncntr_yard_xml = os.path.join(
 path_cntr_yard_xml = os.path.join(
     PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_cntr.xml"
 )
+
 ns = {
     "header": "http://www.exchangenetwork.net/schema/header/2",
     "payload": "http://www.exchangenetwork.net/schema/cer/2",
