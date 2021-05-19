@@ -4,7 +4,7 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
+from locoerlt.utilis import PATH_PROCESSED
 
 
 if __name__ == "__main__":
@@ -148,8 +148,24 @@ if __name__ == "__main__":
         .groupby(["year", "scc_description_level_4", "pollutant"])
         .controlled_em_quant_ton.sum()
         .reset_index()
+            .assign(
+            scc_description_level_4=lambda df: pd.Categorical(
+                df.scc_description_level_4, [
+                    "Line Haul Locomotives: Class I Operations",
+                    "Line Haul Locomotives: Class II / III Operations",
+                    "Line Haul Locomotives: Passenger Trains (Amtrak)",
+                    "Line Haul Locomotives: Commuter Lines",
+                    "Yard Locomotives",
+                ]
+            )
+        )
         .set_index(["year", "scc_description_level_4", "pollutant"])
         .unstack()
+        .sort_index()
+        .droplevel(0, axis=1)
+        .filter(items=["VOC", "CO",	"NOX", "CO2", "SO2", "NH3",	"PM10-PRI",
+                       "PM25-PRI"
+                       ])
     )
 
     cntr_emisquant_20_cap_ghg_statewide.to_excel(path_statewide_20_cap_ghg_cntr)
