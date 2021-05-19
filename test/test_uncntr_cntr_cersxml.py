@@ -253,12 +253,28 @@ def test_cntr_tti_erg_values():
         * (df.controlled_em_quant_ton_tti - df.controlled_em_quant_ton_erg)
         / df.controlled_em_quant_ton_erg
     )
-    erg_tti_annual_by_state.to_excel(path_erg_tti_comp)
 
-    erg_tti_annual_by_state_fil = erg_tti_annual_by_state.dropna(
-        subset=["per_tti_erg_em_quant_diff"]
-    ).loc[
-        lambda df: df.pollutant_str.isin(
-            ["CO", "CO2", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
+    scc_map = {
+              "2285002006": "Line Haul Locomotives: Class I Operations",
+              "2285002007": "Line Haul Locomotives: Class II / III Operations",
+              "2285002008": "Line Haul Locomotives: Passenger Trains (Amtrak)",
+              "2285002009": "Line Haul Locomotives: Commuter Lines",
+              "2285002010": "Yard Locomotives",
+    }
+
+    erg_tti_annual_by_state_fil = (
+        erg_tti_annual_by_state.dropna(
+            subset=["per_tti_erg_em_quant_diff"]
         )
-    ]
+        .loc[lambda df: df.pollutant_str.isin(
+                ["CO", "CO2", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
+            )]
+        .assign(
+            scc_desc=lambda df: df.ssc_str.map(scc_map)
+        )
+        .filter(items=[
+            "ssc_str", "scc_desc", "pollutant_str",
+            "controlled_em_quant_ton_erg",
+            "controlled_em_quant_ton_tti", "per_tti_erg_em_quant_diff"])
+    )
+    erg_tti_annual_by_state_fil.to_excel(path_erg_tti_comp)
