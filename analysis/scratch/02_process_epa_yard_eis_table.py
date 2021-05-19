@@ -40,14 +40,22 @@ assert (
 ), "eis_facility_id is not unique."
 
 
-yards_2020_epa_info = yards_2020.merge(
-    epa_yard_info_fil, left_on="eis_facility_id", right_on="eis_facility_id", how="left"
-).filter(
-    items=[
+yards_2020_epa_info = (
+    yards_2020.merge(
+        epa_yard_info_fil,
+        left_on="eis_facility_id",
+        right_on="eis_facility_id",
+        how="left"
+    )
+    .filter(items=[
+        "stcntyfips",
+        "county",
         "eis_facility_id",
-        "eis_unit_id",
-        "eis_process_id",
-    ]
+        "yardname_v1",
+        "ertac_yards",
+        "site_latitude",
+        "site_longitude"
+    ])
 )
 
 yards_2020_epa_info.to_excel(path_yard_prcs, index=False)
