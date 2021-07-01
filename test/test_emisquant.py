@@ -112,24 +112,24 @@ def test_fuel_consump_in_emis_quant_vs_input(
     get_emis_quant_agg_across_carriers, get_fuel_consump
 ):
     get_emis_quant_agg_across_carriers_county_scc = (
-        get_emis_quant_agg_across_carriers
-        .loc[lambda df: (df.year == 2019) & (df.pollutant == "CO")]
-        .groupby(["stcntyfips","scc_description_level_4"])
-        .agg(county_scc_fuel_consump=(
-            'county_carr_friy_yardnm_fuel_consmp_by_yr', "sum"))
+        get_emis_quant_agg_across_carriers.loc[
+            lambda df: (df.year == 2019) & (df.pollutant == "CO")
+        ]
+        .groupby(["stcntyfips", "scc_description_level_4"])
+        .agg(
+            county_scc_fuel_consump=("county_carr_friy_yardnm_fuel_consmp_by_yr", "sum")
+        )
         .reset_index()
-        .sort_values(["stcntyfips","scc_description_level_4"])
+        .sort_values(["stcntyfips", "scc_description_level_4"])
         .reset_index(drop=True)
     )
 
     get_fuel_consump_county_scc = (
-        get_fuel_consump
-        .merge(
-            xwalk_ssc_desc_4_rr_grp_netgrp_df_,
-            on=['rr_group', 'rr_netgrp']
+        get_fuel_consump.merge(
+            xwalk_ssc_desc_4_rr_grp_netgrp_df_, on=["rr_group", "rr_netgrp"]
         )
-        .groupby(["stcntyfips","scc_description_level_4"])
-        .agg(county_scc_fuel_consump = ('link_fuel_consmp', "sum"))
+        .groupby(["stcntyfips", "scc_description_level_4"])
+        .agg(county_scc_fuel_consump=("link_fuel_consmp", "sum"))
         .reset_index()
         .sort_values(["stcntyfips", "scc_description_level_4"])
         .reset_index(drop=True)
@@ -138,12 +138,13 @@ def test_fuel_consump_in_emis_quant_vs_input(
     test_data = pd.merge(
         get_emis_quant_agg_across_carriers_county_scc,
         get_fuel_consump_county_scc,
-        on = ["stcntyfips", "scc_description_level_4"],
-        suffixes=["_post", "_pre"]
+        on=["stcntyfips", "scc_description_level_4"],
+        suffixes=["_post", "_pre"],
     )
 
-    assert np.allclose(test_data.county_scc_fuel_consump_post,
-                test_data.county_scc_fuel_consump_pre)
+    assert np.allclose(
+        test_data.county_scc_fuel_consump_post, test_data.county_scc_fuel_consump_pre
+    )
 
 
 def test_cls1_2017county_fuel_consmp_not_equal_with_ertac(
@@ -186,12 +187,14 @@ def test_cls1_2017county_fuel_consmp_not_equal_with_ertac(
         )
     )
     get_emis_quant_agg_cls1_fri_17_ertac.to_excel(path_out_qaqc_ertac)
-    assert all((
-                   get_emis_quant_agg_cls1_fri_17_ertac
-                   .loc[lambda df: df.per_dif_tti_ertac > 0,
-                        "per_dif_tti_ertac"]
-                   .dropna()
-               ) >= 2.17)
+    assert all(
+        (
+            get_emis_quant_agg_cls1_fri_17_ertac.loc[
+                lambda df: df.per_dif_tti_ertac > 0, "per_dif_tti_ertac"
+            ].dropna()
+        )
+        >= 2.17
+    )
 
 
 def test_milemx_tot(get_emis_quant, get_prc_nat_rail):
@@ -324,11 +327,11 @@ def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
         .dropna(subset=["proj_fac_calc"])
     )
 
-    mask = ~ np.isclose(
+    mask = ~np.isclose(
         np.round(co2_nh3_co_emis_with_2019.proj_fac_calc, 5),
         np.round(co2_nh3_co_emis_with_2019.proj_fac, 5),
     )
-    test  = co2_nh3_co_emis_with_2019[mask]
+    test = co2_nh3_co_emis_with_2019[mask]
 
     assert np.allclose(
         np.round(co2_nh3_co_emis_with_2019.proj_fac_calc, 5),

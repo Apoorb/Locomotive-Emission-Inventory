@@ -6,8 +6,7 @@ import pytest
 from lxml import etree as lxml_etree
 import glob
 import pandas as pd
-from locoerlt.utilis import (PATH_RAW, PATH_INTERIM, PATH_PROCESSED,
-                             get_snake_case_dict)
+from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
 from locoerlt.xml_2011_2050.uncntr_cntr_cersxml import (
     clean_up_cntr_emisquant,
     clean_up_uncntr_emisquant,
@@ -52,6 +51,7 @@ non_point_scc_list.sort()
 year_list = list(range(2011, 2051))  # add the list of years
 year_list.sort()
 
+
 def get_annual_o3d_emissions_df_from_xml(
     templ_tree: xml.etree.ElementTree.Element,
     pol_tot_em_ton_col_nm: str,
@@ -85,7 +85,9 @@ def get_annual_o3d_emissions_df_from_xml(
                 "payload:LocationEmissionsProcess", ns
             )
             for loc_em_prc_or_scc in loc_em_prc_or_scc_elem_list:
-                scc_elem = loc_em_prc_or_scc.find("payload:SourceClassificationCode", ns)
+                scc_elem = loc_em_prc_or_scc.find(
+                    "payload:SourceClassificationCode", ns
+                )
                 annual_pol_code_list = loc_em_prc_or_scc.findall(
                     ".//payload:ReportingPeriod"
                     "/[payload:ReportingPeriodTypeCode='A']"
@@ -107,7 +109,9 @@ def get_annual_o3d_emissions_df_from_xml(
                     annual_dict["stcntyfips_str"].append(fips_elem.text)
                     annual_dict["ssc_str"].append(scc_elem.text)
                     annual_dict["pollutant_str"].append(annual_pol_code_elem.text)
-                    annual_dict[pol_tot_em_ton_col_nm].append(annual_pol_tot_em_elem.text)
+                    annual_dict[pol_tot_em_ton_col_nm].append(
+                        annual_pol_tot_em_elem.text
+                    )
 
                 o3d_pol_code_list = loc_em_prc_or_scc.findall(
                     ".//payload:ReportingPeriod"
@@ -131,7 +135,9 @@ def get_annual_o3d_emissions_df_from_xml(
                     o3d_dict["stcntyfips_str"].append(fips_elem.text)
                     o3d_dict["ssc_str"].append(scc_elem.text)
                     o3d_dict["pollutant_str"].append(o3d_pol_code_elem.text)
-                    o3d_dict[pol_tot_em_daily_ton_col_nm].append(o3d_pol_tot_em_elem.text)
+                    o3d_dict[pol_tot_em_daily_ton_col_nm].append(
+                        o3d_pol_tot_em_elem.text
+                    )
     annual_df = pd.DataFrame(annual_dict)
     o3d_df = pd.DataFrame(o3d_dict)
     return {"annual_df": annual_df, "o3d_df": o3d_df}
@@ -228,44 +234,45 @@ def test_cntr_tti_erg_values():
 
     erg_annual_by_state = (
         erg_annual_o3d_dict["annual_df"]
-        .assign(controlled_em_quant_ton=lambda df:
-        df.controlled_em_quant_ton_str.astype(float))
-        .groupby(['ssc_str', 'pollutant_str'])
+        .assign(
+            controlled_em_quant_ton=lambda df: df.controlled_em_quant_ton_str.astype(
+                float
+            )
+        )
+        .groupby(["ssc_str", "pollutant_str"])
         .controlled_em_quant_ton.sum()
         .reset_index()
     )
 
     tti_annual_by_state = (
         tti_annual_o3d_dict["annual_df"]
-        .assign(controlled_em_quant_ton=lambda df: (
-            df.controlled_em_quant_ton_str.astype(float))
+        .assign(
+            controlled_em_quant_ton=lambda df: (
+                df.controlled_em_quant_ton_str.astype(float)
             )
-        .groupby(['ssc_str', 'pollutant_str'])
+        )
+        .groupby(["ssc_str", "pollutant_str"])
         .controlled_em_quant_ton.sum()
         .reset_index()
     )
 
-    erg_tti_annual_by_state = (
-        pd.merge(
-            erg_annual_by_state,
-            tti_annual_by_state,
-            on=['ssc_str', 'pollutant_str'],
-            suffixes=["_erg", "_tti"],
-            how="outer"
-        )
-        .assign(
-            per_tti_erg_em_quant_diff=lambda df: 100 * (
-                df.controlled_em_quant_ton_tti - df.controlled_em_quant_ton_erg)
-            / df.controlled_em_quant_ton_erg
-        )
+    erg_tti_annual_by_state = pd.merge(
+        erg_annual_by_state,
+        tti_annual_by_state,
+        on=["ssc_str", "pollutant_str"],
+        suffixes=["_erg", "_tti"],
+        how="outer",
+    ).assign(
+        per_tti_erg_em_quant_diff=lambda df: 100
+        * (df.controlled_em_quant_ton_tti - df.controlled_em_quant_ton_erg)
+        / df.controlled_em_quant_ton_erg
     )
     erg_tti_annual_by_state.to_excel(path_erg_tti_comp)
 
-    erg_tti_annual_by_state_fil = (
-        erg_tti_annual_by_state
-        .dropna(subset=["per_tti_erg_em_quant_diff"])
-        .loc[lambda df: df.pollutant_str.isin([
-            "CO", "CO2", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"])]
-    )
-
-
+    erg_tti_annual_by_state_fil = erg_tti_annual_by_state.dropna(
+        subset=["per_tti_erg_em_quant_diff"]
+    ).loc[
+        lambda df: df.pollutant_str.isin(
+            ["CO", "CO2", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
+        )
+    ]

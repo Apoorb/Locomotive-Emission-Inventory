@@ -5,9 +5,15 @@ import copy
 import pandas as pd
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
-from locoerlt.cersxml_templ import set_creation_datetime, set_document_id, register_all_namespaces, print_xml_lines
+from locoerlt.cersxml_templ import (
+    set_creation_datetime,
+    set_document_id,
+    register_all_namespaces,
+    print_xml_lines,
+)
 
 
 def qc_clean_up_uncntr_emisquant(uncntr_emisquant, uncntr_emisquant_no_yardnm):
@@ -74,8 +80,7 @@ def clean_up_uncntr_emisquant(path_uncntr_emisquant_):
     )
     qc_clean_up_uncntr_emisquant(uncntr_emisquant, uncntr_emisquant_no_yardnm)
     uncntr_emisquant_2011_50_fil_scc = (
-        uncntr_emisquant_no_yardnm
-        .assign(
+        uncntr_emisquant_no_yardnm.assign(
             year_str=lambda df: df.year.astype(int).astype(str),
             stcntyfips_str=lambda df: df.stcntyfips.astype(int).astype(str),
             ssc_str=lambda df: df.scc.astype(str).str.split(".", expand=True)[0],
@@ -171,33 +176,27 @@ def clean_up_cntr_emisquant(path_cntr_emisquant_):
         .reset_index()
     )
     qc_clean_uncntr_emisquant(cntr_emisquant, cntr_emisquant_no_yardnm)
-    cntr_emisquant_2011_50_fil_scc = (
-        cntr_emisquant_no_yardnm
-        .assign(
-            year_str=lambda df: df.year.astype(int).astype(str),
-            stcntyfips_str=lambda df: df.stcntyfips.astype(int).astype(str),
-            ssc_str=lambda df: df.scc.astype(str).str.split(".", expand=True)[0],
-            pollutant_str=lambda df: df.pollutant.astype(str),
-            controlled_em_quant_ton_str=lambda df: df.controlled_em_quant_ton.astype(
-                str
-            ),
-            controlled_em_quant_ton_daily_str=lambda df: (
-                df.controlled_em_quant_ton / 365
-            ).astype(str),
-        )
-        .filter(
-            items=[
-                "year_str",
-                "stcntyfips_str",
-                "ssc_str",
-                "pollutant_str",
-                "controlled_em_quant_ton_str",
-                "controlled_em_quant_ton_daily_str",
-            ]
-        )
+    cntr_emisquant_2011_50_fil_scc = cntr_emisquant_no_yardnm.assign(
+        year_str=lambda df: df.year.astype(int).astype(str),
+        stcntyfips_str=lambda df: df.stcntyfips.astype(int).astype(str),
+        ssc_str=lambda df: df.scc.astype(str).str.split(".", expand=True)[0],
+        pollutant_str=lambda df: df.pollutant.astype(str),
+        controlled_em_quant_ton_str=lambda df: df.controlled_em_quant_ton.astype(str),
+        controlled_em_quant_ton_daily_str=lambda df: (
+            df.controlled_em_quant_ton / 365
+        ).astype(str),
+    ).filter(
+        items=[
+            "year_str",
+            "stcntyfips_str",
+            "ssc_str",
+            "pollutant_str",
+            "controlled_em_quant_ton_str",
+            "controlled_em_quant_ton_daily_str",
+        ]
     )
     cntr_emisquant_2011_50_fil_scc_grp = cntr_emisquant_2011_50_fil_scc.groupby(
-        ["year_str","stcntyfips_str", "ssc_str"]
+        ["year_str", "stcntyfips_str", "ssc_str"]
     )
     return {
         "raw_data": cntr_emisquant_2011_50_fil_scc,
@@ -210,7 +209,7 @@ def get_uncntr_cntr_xml(
     grp_uncntr_cntr,
     pol_ton_col: str,
     pol_ton_daily_col: str,
-    year_list, # new index is year list
+    year_list,  # new index is year list
     tx_counties_list,
     non_point_scc_list,
     doc_id,
@@ -225,7 +224,7 @@ def get_uncntr_cntr_xml(
     set_document_id(templ_root, doc_id=doc_id)
     set_creation_datetime(templ_root_header, ns=ns)
 
-    payload_template = templ_tree.find("header:Payload", ns)    # payload template
+    payload_template = templ_tree.find("header:Payload", ns)  # payload template
 
     cers_template = payload_template.find("payload:CERS", ns)
     cers_template_cpy = copy.deepcopy(cers_template)  # copy of cers
@@ -234,27 +233,24 @@ def get_uncntr_cntr_xml(
     # location_template_cpy = copy.deepcopy(location_template) # made this unfunctional
 
     # cers_template.remove(location_template) # should be one layer upper
-    payload_template.remove(cers_template) # it should be this insteaded
+    payload_template.remove(cers_template)  # it should be this insteaded
     year_index = 2022
     county = tx_counties_list[0]
     scc = non_point_scc_list[0]
-
 
     for year_index in year_list:
         cers_template_cpy_cpy = copy.deepcopy(cers_template_cpy)
         year_elem = cers_template_cpy_cpy.find("payload:EmissionsYear", ns)
         year_elem.text = f"{year_index}"
-        location_template = cers_template_cpy_cpy.find(
-            "payload:Location", ns
-        )
-        location_template_cpy = copy.deepcopy(
-            location_template
-        )
+        location_template = cers_template_cpy_cpy.find("payload:Location", ns)
+        location_template_cpy = copy.deepcopy(location_template)
         cers_template_cpy_cpy.remove(location_template)
 
         for county in tx_counties_list:
             location_template_cpy_cpy = copy.deepcopy(location_template_cpy)
-            fips_elem = location_template_cpy_cpy.find("payload:StateAndCountyFIPSCode", ns)
+            fips_elem = location_template_cpy_cpy.find(
+                "payload:StateAndCountyFIPSCode", ns
+            )
             fips_elem.text = f"{county}"
             locationemissionsprocess_template = location_template_cpy_cpy.find(
                 "payload:LocationEmissionsProcess", ns
@@ -273,8 +269,11 @@ def get_uncntr_cntr_xml(
                 scc_elem.text = scc
                 try:
                     print(
-                        f"Now processing year: {year_index}, county: {county}, scc: {scc}, pol_ton_col: {pol_ton_col}...")
-                    relevant_data = grp_uncntr_cntr.get_group((str(year_index), county, scc))  #added the year
+                        f"Now processing year: {year_index}, county: {county}, scc: {scc}, pol_ton_col: {pol_ton_col}..."
+                    )
+                    relevant_data = grp_uncntr_cntr.get_group(
+                        (str(year_index), county, scc)
+                    )  # added the year
                     reportingperiod_annual_reportingperiodemissions = (
                         locationemissionsprocess_template_cpy_cpy.findall(
                             "*/[payload:ReportingPeriodTypeCode='A']"
@@ -319,22 +318,26 @@ def get_uncntr_cntr_xml(
                         cur_pollutant_emission.text = replace_value
                 except KeyError:
                     pass
-                location_template_cpy_cpy.append(locationemissionsprocess_template_cpy_cpy)
+                location_template_cpy_cpy.append(
+                    locationemissionsprocess_template_cpy_cpy
+                )
             cers_template_cpy_cpy.append(location_template_cpy_cpy)
-        payload_template.append(cers_template_cpy_cpy)   # add back all years
+        payload_template.append(cers_template_cpy_cpy)  # add back all years
     return templ_tree
 
 
 def write_xml(xml_tree, path_out_xml):
     path_out_dirty_xml = path_out_xml.replace(".xml", "_unformatted.xml")
-    xml_tree.write(path_out_dirty_xml, encoding='utf-8', xml_declaration=True)
+    xml_tree.write(path_out_dirty_xml, encoding="utf-8", xml_declaration=True)
     # https://stackoverflow.com/questions/5086922/python-pretty-xml-printer-with-lxml
     # https://stackoverflow.com/questions/48788915/how-to-avoid-incorrect-indentation-in-generated-xml-file-when-inserting-elementt
     lxml_etree_root = lxml_etree.parse(
         path_out_dirty_xml,
         parser=lxml_etree.XMLParser(remove_blank_text=True, remove_comments=True),
     )
-    lxml_etree_root.write(path_out_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
+    lxml_etree_root.write(
+        path_out_xml, pretty_print=True, encoding="utf-8", xml_declaration=True
+    )
     os.remove(path_out_dirty_xml)
 
 

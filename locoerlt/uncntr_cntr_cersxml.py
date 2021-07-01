@@ -5,9 +5,14 @@ import copy
 import pandas as pd
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
-from locoerlt.cersxml_templ import set_creation_datetime, set_document_id, register_all_namespaces
+from locoerlt.cersxml_templ import (
+    set_creation_datetime,
+    set_document_id,
+    register_all_namespaces,
+)
 
 
 def qc_clean_up_uncntr_emisquant(uncntr_emisquant, uncntr_emisquant_no_yardnm):
@@ -297,14 +302,16 @@ def get_uncntr_cntr_xml(
 
 def write_xml(xml_tree, path_out_xml):
     path_out_dirty_xml = path_out_xml.replace(".xml", "_unformatted.xml")
-    xml_tree.write(path_out_dirty_xml, encoding='utf-8', xml_declaration=True)
+    xml_tree.write(path_out_dirty_xml, encoding="utf-8", xml_declaration=True)
     # https://stackoverflow.com/questions/5086922/python-pretty-xml-printer-with-lxml
     # https://stackoverflow.com/questions/48788915/how-to-avoid-incorrect-indentation-in-generated-xml-file-when-inserting-elementt
     lxml_etree_root = lxml_etree.parse(
         path_out_dirty_xml,
         parser=lxml_etree.XMLParser(remove_blank_text=True, remove_comments=True),
     )
-    lxml_etree_root.write(path_out_xml, pretty_print=True, encoding='utf-8', xml_declaration=True)
+    lxml_etree_root.write(
+        path_out_xml, pretty_print=True, encoding="utf-8", xml_declaration=True
+    )
     os.remove(path_out_dirty_xml)
 
 

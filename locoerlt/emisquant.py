@@ -2,7 +2,8 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 from locoerlt.utilis import (
     PATH_RAW,
     PATH_INTERIM,
@@ -174,22 +175,28 @@ def add_scc_desc_to_fuel_proj_cnty(
         "yards. This is inline with how fuel consumption is coded for Amtrak."
     )
 
-    assert set(
-        fuel_consump_prj_by_cnty_.loc[
-            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "DART")),
-            "rr_netgrp",
-        ].unique()
-    ) == {"Freight"}, (
+    assert (
+        set(
+            fuel_consump_prj_by_cnty_.loc[
+                lambda df: ((df.rr_group == "Commuter") & (df.carrier == "DART")),
+                "rr_netgrp",
+            ].unique()
+        )
+        == {"Freight"}
+    ), (
         "Above mapping does not consider DART on industrial leads and "
         "yards. This is inline with how fuel consumption is coded for DART."
     )
 
-    assert set(
-        fuel_consump_prj_by_cnty_.loc[
-            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "TREX")),
-            "rr_netgrp",
-        ].unique()
-    ) == {"Freight", "Industrial", "Yard"}, (
+    assert (
+        set(
+            fuel_consump_prj_by_cnty_.loc[
+                lambda df: ((df.rr_group == "Commuter") & (df.carrier == "TREX")),
+                "rr_netgrp",
+            ].unique()
+        )
+        == {"Freight", "Industrial", "Yard"}
+    ), (
         "Above mapping considers TREX on Freight, industrial leads, and "
         "yards. This is inline with how fuel consumption is coded for TREX."
     )
