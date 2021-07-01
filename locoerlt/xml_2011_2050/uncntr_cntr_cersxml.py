@@ -73,7 +73,7 @@ def clean_up_uncntr_emisquant(path_uncntr_emisquant_):
         .reset_index()
     )
     qc_clean_up_uncntr_emisquant(uncntr_emisquant, uncntr_emisquant_no_yardnm)
-    uncntr_emisquant_2020_fil_scc = (
+    uncntr_emisquant_2011_50_fil_scc = (
         uncntr_emisquant_no_yardnm
         .assign(
             year_str=lambda df: df.year.astype(int).astype(str),
@@ -99,12 +99,12 @@ def clean_up_uncntr_emisquant(path_uncntr_emisquant_):
         )
         .reset_index(drop=True)
     )
-    uncntr_emisquant_2020_fil_scc_grp = uncntr_emisquant_2020_fil_scc.groupby(
+    uncntr_emisquant_2011_50_fil_scc_grp = uncntr_emisquant_2011_50_fil_scc.groupby(
         ["year_str", "stcntyfips_str", "ssc_str"]
     )
     return {
-        "raw_data": uncntr_emisquant_2020_fil_scc,
-        "grps": uncntr_emisquant_2020_fil_scc_grp,
+        "raw_data": uncntr_emisquant_2011_50_fil_scc,
+        "grps": uncntr_emisquant_2011_50_fil_scc_grp,
     }
 
 
@@ -171,7 +171,7 @@ def clean_up_cntr_emisquant(path_cntr_emisquant_):
         .reset_index()
     )
     qc_clean_uncntr_emisquant(cntr_emisquant, cntr_emisquant_no_yardnm)
-    cntr_emisquant_2020_fil_scc = (
+    cntr_emisquant_2011_50_fil_scc = (
         cntr_emisquant_no_yardnm
         .assign(
             year_str=lambda df: df.year.astype(int).astype(str),
@@ -196,12 +196,12 @@ def clean_up_cntr_emisquant(path_cntr_emisquant_):
             ]
         )
     )
-    cntr_emisquant_2020_fil_scc_grp = cntr_emisquant_2020_fil_scc.groupby(
+    cntr_emisquant_2011_50_fil_scc_grp = cntr_emisquant_2011_50_fil_scc.groupby(
         ["year_str","stcntyfips_str", "ssc_str"]
     )
     return {
-        "raw_data": cntr_emisquant_2020_fil_scc,
-        "grps": cntr_emisquant_2020_fil_scc_grp,
+        "raw_data": cntr_emisquant_2011_50_fil_scc,
+        "grps": cntr_emisquant_2011_50_fil_scc_grp,
     }
 
 
@@ -347,8 +347,8 @@ if __name__ == "__main__":
     )[0]
     path_xml_templ = os.path.join(PATH_INTERIM, "xml_rail_templ_tti.xml")
     path_county = os.path.join(PATH_RAW, "Texas_County_Boundaries.csv")
-    path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx.xml")
-    path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx.xml")
+    path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx_2011_50.xml")
+    path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx_2011_50.xml")
     tx_counties = pd.read_csv(path_county)
     tx_counties_list = list(
         tx_counties.rename(columns=get_snake_case_dict(tx_counties.columns))
@@ -373,51 +373,51 @@ if __name__ == "__main__":
     year_list = list(range(2011, 2051))  # add the list of years
     year_list.sort()
 
-    uncntr_emisquant_2020_fil_scc_dict = clean_up_uncntr_emisquant(
+    uncntr_emisquant_2011_50_fil_scc_dict = clean_up_uncntr_emisquant(
         path_uncntr_emisquant_=path_uncntr_emisquant
     )
-    cntr_emisquant_2020_fil_scc_dict = clean_up_cntr_emisquant(
+    cntr_emisquant_2011_50_fil_scc_dict = clean_up_cntr_emisquant(
         path_cntr_emisquant_=path_cntr_emisquant
     )
-    uncntr_emisquant_2020_fil_scc = uncntr_emisquant_2020_fil_scc_dict["raw_data"]
-    cntr_emisquant_2020_fil_scc = cntr_emisquant_2020_fil_scc_dict["raw_data"]
-    uncntr_emisquant_2020_fil_scc_grp = uncntr_emisquant_2020_fil_scc_dict["grps"]
-    cntr_emisquant_2020_fil_scc_grp = cntr_emisquant_2020_fil_scc_dict["grps"]
+    uncntr_emisquant_2011_50_fil_scc = uncntr_emisquant_2011_50_fil_scc_dict["raw_data"]
+    cntr_emisquant_2011_50_fil_scc = cntr_emisquant_2011_50_fil_scc_dict["raw_data"]
+    uncntr_emisquant_2011_50_fil_scc_grp = uncntr_emisquant_2011_50_fil_scc_dict["grps"]
+    cntr_emisquant_2011_50_fil_scc_grp = cntr_emisquant_2011_50_fil_scc_dict["grps"]
     assert (
-        set(uncntr_emisquant_2020_fil_scc.reset_index().stcntyfips_str)
+        set(uncntr_emisquant_2011_50_fil_scc.reset_index().stcntyfips_str)
         - set(tx_counties_list)
     ) == set(), (
-        "uncntr_emisquant_2020_fil_scc counties should be a subset of all "
+        "uncntr_emisquant_2011_50_fil_scc counties should be a subset of all "
         "Texas counties"
     )
     assert (
-        set(cntr_emisquant_2020_fil_scc.stcntyfips_str) - set(tx_counties_list)
+        set(cntr_emisquant_2011_50_fil_scc.stcntyfips_str) - set(tx_counties_list)
     ) == set(), (
-        "cntr_emisquant_2020_fil_scc counties should be a subset of all "
+        "cntr_emisquant_2011_50_fil_scc counties should be a subset of all "
         "Texas counties"
     )
 
     register_all_namespaces(path_xml_templ)
     uncntr_xml_tree = get_uncntr_cntr_xml(
         path_xml_templ=path_xml_templ,
-        grp_uncntr_cntr=uncntr_emisquant_2020_fil_scc_grp,
+        grp_uncntr_cntr=uncntr_emisquant_2011_50_fil_scc_grp,
         pol_ton_col="uncontrolled_em_quant_ton_str",
         pol_ton_daily_col="uncontrolled_em_quant_ton_daily_str",
         year_list=year_list,  # add the list of years
         tx_counties_list=tx_counties_list,
         non_point_scc_list=non_point_scc_list,
-        doc_id="locomotives_uncntr_cers_aerr_2020_xml",
+        doc_id="locomotives_uncntr_cers_aerr_2011_50_xml",
     )
     write_xml(xml_tree=uncntr_xml_tree, path_out_xml=path_out_uncntr)
 
     cntr_xml_tree = get_uncntr_cntr_xml(
         path_xml_templ=path_xml_templ,
-        grp_uncntr_cntr=cntr_emisquant_2020_fil_scc_grp,
+        grp_uncntr_cntr=cntr_emisquant_2011_50_fil_scc_grp,
         pol_ton_col="controlled_em_quant_ton_str",
         pol_ton_daily_col="controlled_em_quant_ton_daily_str",
         year_list=year_list,  # add the list of years
         tx_counties_list=tx_counties_list,
         non_point_scc_list=non_point_scc_list,
-        doc_id="locomotives_cntr_cers_aerr_2020_xml",
+        doc_id="locomotives_cntr_cers_aerr_2011_50_xml",
     )
     write_xml(xml_tree=cntr_xml_tree, path_out_xml=path_out_cntr)

@@ -15,8 +15,8 @@ from locoerlt.xml_2011_2050.uncntr_cntr_cersxml import (
 
 path_erg_cntr = os.path.join(PATH_RAW, "ERG", "rail2020-controlled-v2.xml")
 path_erg_uncntr = os.path.join(PATH_RAW, "ERG", "rail2020-Uncontrolled.xml")
-path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx.xml")
-path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx.xml")
+path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx_2011_50.xml")
+path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx_2011_50.xml")
 path_uncntr_emisquant = glob.glob(
     os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")
 )[0]
