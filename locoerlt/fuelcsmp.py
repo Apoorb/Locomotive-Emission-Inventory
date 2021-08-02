@@ -6,7 +6,8 @@ import pandas as pd
 import numpy as np
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 from locoerlt.utilis import (
     PATH_RAW,
     PATH_INTERIM,

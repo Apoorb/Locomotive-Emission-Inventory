@@ -7,7 +7,8 @@ import copy
 import pandas as pd
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM
 
 
@@ -274,7 +275,7 @@ def print_child(
 
 
 def register_all_namespaces(filename):
-    namespaces = dict([node for _, node in ET.iterparse(filename, events=['start-ns'])])
+    namespaces = dict([node for _, node in ET.iterparse(filename, events=["start-ns"])])
     for ns in namespaces:
         ET.register_namespace(ns, namespaces[ns])
 
@@ -301,4 +302,4 @@ if __name__ == "__main__":
     templ_root_header = modify_template_header(templ_root_=templ_root, ns=ns)
     print_xml_lines(tree_elem=templ_root, max_lines=40)
     modify_payload(templ_root_=templ_root, tti_pol_list_=tti_pol_list, ns=ns)
-    templ_tree.write(path_out_templ, encoding='utf-8', xml_declaration=True)
+    templ_tree.write(path_out_templ, encoding="utf-8", xml_declaration=True)

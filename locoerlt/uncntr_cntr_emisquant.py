@@ -5,7 +5,8 @@ import pandas as pd
 import glob
 import os
 import sys
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), '..')))
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 from locoerlt.utilis import (
     PATH_RAW,
     PATH_INTERIM,
@@ -235,11 +236,12 @@ def get_deri_uncontrolled_quant(
             "scc",
             "scc_description_level_4",
             "yardname_v1",
+            "eis_facility_id",
             "pol_type",
             "pollutant",
             "pol_desc",
-            "start_lat",
-            "start_long",
+            "site_latitude",
+            "site_longitude",
             "nox_red_tons_per_yr_per_region",
             "nox_red_tons_per_yr_per_county_per_yard",
         ],
@@ -297,7 +299,37 @@ if __name__ == "__main__":
     deri_emis_red_by_yard_summary = uncontrolled_emis_quant_deri_dict[
         "deri_emis_red_by_yard_summary"
     ]
-    deri_emis_red_by_yard_summary.to_csv(path_deri_prc_out)
+
+    deri_rename_cols = {
+        'year': "Year",
+        'region': "Region",
+        'stcntyfips': "FIPS",
+        'county_name': "County",
+        'sector_description': "Sector Description",
+        'scc_description_level_1': "SCC Description Level 1",
+        'scc_description_level_2': "SCC Description Level 2",
+        'scc_description_level_3': "SCC Description Level 3",
+        'scc': "SCC",
+        'scc_description_level_4': "SCC Description Level 4",
+        'yardname_v1': "Yard Name",
+        'pol_type': "Pollutant Type",
+        'pollutant': "Pollutant",
+        'pol_desc': "Pollutant Description",
+        'site_latitude': "Latitude",
+        'site_longitude': "Longitude",
+        'nox_red_tons_per_yr_per_region': "NOx Reduction per Year per Region",
+        "no_counties_yards": "No of Counties and Yards in Region",
+        'nox_red_tons_per_yr_per_county_per_yard':
+            "NOx Reduction per Year per County and Yard"
+    }
+    deri_emis_red_by_yard_summary_1 = (
+        deri_emis_red_by_yard_summary
+        .rename(
+            columns=deri_rename_cols
+        )
+        .filter(items=deri_rename_cols.values())
+    )
+    deri_emis_red_by_yard_summary_1.to_csv(path_deri_prc_out)
 
     uncontrolled_emis_quant_deri.to_csv(path_out_uncntr)
     controlled_emis_quant.to_csv(path_out_cntr)
