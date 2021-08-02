@@ -94,8 +94,8 @@ def set_generic_sourceclassificationcode_emtype(
 def get_annual_o3d_pollutants_erg(
     templ_root_payload_cers_loc_locemprc_report_period_A_: xml.etree.ElementTree.Element,
     templ_root_payload_cers_loc_locemprc_report_period_O3D_: xml.etree.ElementTree.Element,
-    ns_: dict[str, str],
-) -> dict[xml.etree.ElementTree.Element, xml.etree.ElementTree.Element]:
+    ns_,
+) -> dict:
     annual_pollutant_elements = (
         templ_root_payload_cers_loc_locemprc_report_period_A_.findall(
             "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_

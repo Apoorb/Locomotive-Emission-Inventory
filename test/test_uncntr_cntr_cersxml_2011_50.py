@@ -7,15 +7,15 @@ from lxml import etree as lxml_etree
 import glob
 import pandas as pd
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
-from locoerlt.uncntr_cntr_cersxml import (
+from locoerlt.xml_2011_2050.uncntr_cntr_cersxml import (
     clean_up_cntr_emisquant,
     clean_up_uncntr_emisquant,
 )
 
 path_erg_cntr = os.path.join(PATH_RAW, "ERG", "rail2020-controlled-v2.xml")
 path_erg_uncntr = os.path.join(PATH_RAW, "ERG", "rail2020-Uncontrolled.xml")
-path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx.xml")
-path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx.xml")
+path_out_cntr = os.path.join(PATH_PROCESSED, "cntr_cers_tx_2011_50.xml")
+path_out_uncntr = os.path.join(PATH_PROCESSED, "uncntr_cers_tx_2011_50.xml")
 path_uncntr_emisquant = glob.glob(
     os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")
 )[0]
@@ -48,6 +48,9 @@ non_point_scc_list = [
 ]
 non_point_scc_list.sort()
 
+year_list = list(range(2011, 2051))  # add the list of years
+year_list.sort()
+
 
 def get_annual_o3d_emissions_df_from_xml(
     templ_tree: xml.etree.ElementTree.Element,
@@ -55,8 +58,8 @@ def get_annual_o3d_emissions_df_from_xml(
     pol_tot_em_daily_ton_col_nm: str,
 ):
     templ_root = templ_tree.getroot()
-    loc_elem_list = templ_root.findall(".//payload:Location", ns)
     annual_dict = {
+        "year_str": [],
         "stcntyfips_str": [],
         "ssc_str": [],
         "pollutant_str": [],
@@ -64,63 +67,77 @@ def get_annual_o3d_emissions_df_from_xml(
     }
 
     o3d_dict = {
+        "year_str": [],
         "stcntyfips_str": [],
         "ssc_str": [],
         "pollutant_str": [],
         pol_tot_em_daily_ton_col_nm: [],
     }
+    cers_elem_list = templ_root.findall(".//payload:CERS", ns)
 
-    for loc_or_county in loc_elem_list:
-        fips_elem = loc_or_county.find("payload:StateAndCountyFIPSCode", ns)
-        loc_em_prc_or_scc_elem_list = loc_or_county.findall(
-            "payload:LocationEmissionsProcess", ns
-        )
-        for loc_em_prc_or_scc in loc_em_prc_or_scc_elem_list:
-            scc_elem = loc_em_prc_or_scc.find("payload:SourceClassificationCode", ns)
-            annual_pol_code_list = loc_em_prc_or_scc.findall(
-                ".//payload:ReportingPeriod"
-                "/[payload:ReportingPeriodTypeCode='A']"
-                "/*"
-                "/payload:PollutantCode",
-                ns,
-            )
-            annual_pol_tot_em_list = loc_em_prc_or_scc.findall(
-                ".//payload:ReportingPeriod"
-                "/[payload:ReportingPeriodTypeCode='A']"
-                "/*"
-                "/payload:TotalEmissions",
-                ns,
-            )
-            for annual_pol_code_elem, annual_pol_tot_em_elem in zip(
-                annual_pol_code_list, annual_pol_tot_em_list
-            ):
-                annual_dict["stcntyfips_str"].append(fips_elem.text)
-                annual_dict["ssc_str"].append(scc_elem.text)
-                annual_dict["pollutant_str"].append(annual_pol_code_elem.text)
-                annual_dict[pol_tot_em_ton_col_nm].append(annual_pol_tot_em_elem.text)
+    for year_cers_elem in cers_elem_list:
+        year_elem = year_cers_elem.find("payload:EmissionsYear", ns)
+        loc_elem_list = year_cers_elem.findall(".//payload:Location", ns)
 
-            o3d_pol_code_list = loc_em_prc_or_scc.findall(
-                ".//payload:ReportingPeriod"
-                "/[payload:ReportingPeriodTypeCode='O3D']"
-                "/*"
-                "/payload:PollutantCode",
-                ns,
+        for loc_or_county in loc_elem_list:
+            fips_elem = loc_or_county.find("payload:StateAndCountyFIPSCode", ns)
+            loc_em_prc_or_scc_elem_list = loc_or_county.findall(
+                "payload:LocationEmissionsProcess", ns
             )
-            o3d_pol_tot_em_list = loc_em_prc_or_scc.findall(
-                ".//payload:ReportingPeriod"
-                "/[payload:ReportingPeriodTypeCode='O3D']"
-                "/*"
-                "/payload:TotalEmissions",
-                ns,
-            )
+            for loc_em_prc_or_scc in loc_em_prc_or_scc_elem_list:
+                scc_elem = loc_em_prc_or_scc.find(
+                    "payload:SourceClassificationCode", ns
+                )
+                annual_pol_code_list = loc_em_prc_or_scc.findall(
+                    ".//payload:ReportingPeriod"
+                    "/[payload:ReportingPeriodTypeCode='A']"
+                    "/*"
+                    "/payload:PollutantCode",
+                    ns,
+                )
+                annual_pol_tot_em_list = loc_em_prc_or_scc.findall(
+                    ".//payload:ReportingPeriod"
+                    "/[payload:ReportingPeriodTypeCode='A']"
+                    "/*"
+                    "/payload:TotalEmissions",
+                    ns,
+                )
+                for annual_pol_code_elem, annual_pol_tot_em_elem in zip(
+                    annual_pol_code_list, annual_pol_tot_em_list
+                ):
+                    annual_dict["year_str"].append(year_elem.text)
+                    annual_dict["stcntyfips_str"].append(fips_elem.text)
+                    annual_dict["ssc_str"].append(scc_elem.text)
+                    annual_dict["pollutant_str"].append(annual_pol_code_elem.text)
+                    annual_dict[pol_tot_em_ton_col_nm].append(
+                        annual_pol_tot_em_elem.text
+                    )
 
-            for o3d_pol_code_elem, o3d_pol_tot_em_elem in zip(
-                o3d_pol_code_list, o3d_pol_tot_em_list
-            ):
-                o3d_dict["stcntyfips_str"].append(fips_elem.text)
-                o3d_dict["ssc_str"].append(scc_elem.text)
-                o3d_dict["pollutant_str"].append(o3d_pol_code_elem.text)
-                o3d_dict[pol_tot_em_daily_ton_col_nm].append(o3d_pol_tot_em_elem.text)
+                o3d_pol_code_list = loc_em_prc_or_scc.findall(
+                    ".//payload:ReportingPeriod"
+                    "/[payload:ReportingPeriodTypeCode='O3D']"
+                    "/*"
+                    "/payload:PollutantCode",
+                    ns,
+                )
+                o3d_pol_tot_em_list = loc_em_prc_or_scc.findall(
+                    ".//payload:ReportingPeriod"
+                    "/[payload:ReportingPeriodTypeCode='O3D']"
+                    "/*"
+                    "/payload:TotalEmissions",
+                    ns,
+                )
+
+                for o3d_pol_code_elem, o3d_pol_tot_em_elem in zip(
+                    o3d_pol_code_list, o3d_pol_tot_em_list
+                ):
+                    o3d_dict["year_str"].append(year_elem.text)
+                    o3d_dict["stcntyfips_str"].append(fips_elem.text)
+                    o3d_dict["ssc_str"].append(scc_elem.text)
+                    o3d_dict["pollutant_str"].append(o3d_pol_code_elem.text)
+                    o3d_dict[pol_tot_em_daily_ton_col_nm].append(
+                        o3d_pol_tot_em_elem.text
+                    )
     annual_df = pd.DataFrame(annual_dict)
     o3d_df = pd.DataFrame(o3d_dict)
     return {"annual_df": annual_df, "o3d_df": o3d_df}
@@ -142,14 +159,14 @@ def test_cntr_input_output_data_equal():
     test_data_annual = pd.merge(
         cntr_emisquant_2020_fil_scc,
         annual_df,
-        on=["stcntyfips_str", "ssc_str", "pollutant_str"],
+        on=["year_str", "stcntyfips_str", "ssc_str", "pollutant_str"],
         how="left",
         suffixes=["_in", "_xml"],
     )
     test_data_o3d = pd.merge(
         cntr_emisquant_2020_fil_scc,
         o3d_df,
-        on=["stcntyfips_str", "ssc_str", "pollutant_str"],
+        on=["year_str", "stcntyfips_str", "ssc_str", "pollutant_str"],
         how="left",
         suffixes=["_in", "_xml"],
     ).dropna(subset=["controlled_em_quant_ton_daily_str_xml"])
@@ -179,14 +196,14 @@ def test_uncntr_input_output_data_equal():
     test_data_annual = pd.merge(
         uncntr_emisquant_2020_fil_scc,
         annual_df,
-        on=["stcntyfips_str", "ssc_str", "pollutant_str"],
+        on=["year_str", "stcntyfips_str", "ssc_str", "pollutant_str"],
         how="left",
         suffixes=["_in", "_xml"],
     )
     test_data_o3d = pd.merge(
         uncntr_emisquant_2020_fil_scc,
         o3d_df,
-        on=["stcntyfips_str", "ssc_str", "pollutant_str"],
+        on=["year_str", "stcntyfips_str", "ssc_str", "pollutant_str"],
         how="left",
         suffixes=["_in", "_xml"],
     ).dropna(subset=["uncontrolled_em_quant_ton_daily_str_xml"])
