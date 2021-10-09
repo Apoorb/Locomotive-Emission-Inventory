@@ -70,7 +70,6 @@ def preprc_link(
     natrail2020_1 = natrail2020.rename(
         columns={col: inflection.underscore(col) for col in natrail2020.columns}
     ).assign(rr_netgrp=lambda df: df.net.map(map_rrgrp_))
-
     strail_2020 = natrail2020_1.loc[
         lambda df: (df.stateab.isin(filter_st)) & (df.rr_netgrp.isin(filter_rrgrp))
     ].assign(all_oper=lambda df: df[list(trk_right_cols)].apply(set, axis=1))
@@ -149,7 +148,7 @@ def get_class_1_freight_fuel_consump(
 ) -> pd.DataFrame:
     """
     Split the 2019 statewide class 1 fuel usage for freight to county by county
-    fuel usage.
+    fuel usage. Distribute the fuel usage to each link within the county.
 
     fueluse2019_preprc_:
         2019 pre-processed fuel usage data in long format.

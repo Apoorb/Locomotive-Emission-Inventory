@@ -53,6 +53,7 @@ def get_annual_o3d_emissions_df_from_xml(
     templ_tree: xml.etree.ElementTree.Element,
     pol_tot_em_ton_col_nm: str,
     pol_tot_em_daily_ton_col_nm: str,
+    ns
 ):
     templ_root = templ_tree.getroot()
     loc_elem_list = templ_root.findall(".//payload:Location", ns)
@@ -132,6 +133,7 @@ def test_cntr_input_output_data_equal():
         templ_tree=cntr_tree,
         pol_tot_em_ton_col_nm="controlled_em_quant_ton_str",
         pol_tot_em_daily_ton_col_nm="controlled_em_quant_ton_daily_str",
+        ns=ns
     )
     annual_df = annual_o3d_dict["annual_df"]
     o3d_df = annual_o3d_dict["o3d_df"]
@@ -169,6 +171,7 @@ def test_uncntr_input_output_data_equal():
         templ_tree=uncntr_tree,
         pol_tot_em_ton_col_nm="uncontrolled_em_quant_ton_str",
         pol_tot_em_daily_ton_col_nm="uncontrolled_em_quant_ton_daily_str",
+        ns=ns
     )
     annual_df = annual_o3d_dict["annual_df"]
     o3d_df = annual_o3d_dict["o3d_df"]
@@ -206,6 +209,7 @@ def test_cntr_tti_erg_values():
         templ_tree=erg_cntr_tree,
         pol_tot_em_ton_col_nm="controlled_em_quant_ton_str",
         pol_tot_em_daily_ton_col_nm="controlled_em_quant_ton_daily_str",
+        ns=ns
     )
 
     tti_cntr_tree = ET.parse(path_out_cntr)
@@ -213,6 +217,7 @@ def test_cntr_tti_erg_values():
         templ_tree=tti_cntr_tree,
         pol_tot_em_ton_col_nm="controlled_em_quant_ton_str",
         pol_tot_em_daily_ton_col_nm="controlled_em_quant_ton_daily_str",
+        ns=ns
     )
 
     erg_annual_by_state = (
