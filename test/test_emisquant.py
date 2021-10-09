@@ -111,6 +111,14 @@ def get_county_cls1_prop_input():
 def test_fuel_consump_in_emis_quant_vs_input(
     get_emis_quant_agg_across_carriers, get_fuel_consump
 ):
+    """
+    County level fuel consumption for non-yard groups should match between the
+    input and output.
+    Statewide yards fuel consumption was distribution using the ERTAC yard count.
+    Input uses the mileage data, so the input and output yard fuel usage by county
+    will not match. Check the statewide yard fuel consumption between the input
+    and the output.
+    """
     get_emis_quant_agg_across_carriers_county_scc = (
         get_emis_quant_agg_across_carriers.loc[
             lambda df: (df.year == 2019) & (df.pollutant == "CO")
@@ -135,19 +143,37 @@ def test_fuel_consump_in_emis_quant_vs_input(
         .reset_index(drop=True)
     )
 
-    test_data = pd.merge(
-        get_emis_quant_agg_across_carriers_county_scc,
-        get_fuel_consump_county_scc,
+    test_data_non_yard = pd.merge(
+        get_emis_quant_agg_across_carriers_county_scc.loc[
+            lambda df: df.scc_description_level_4 != "Yard Locomotives"],
+        get_fuel_consump_county_scc[
+            lambda df: df.scc_description_level_4 != "Yard Locomotives"],
         on=["stcntyfips", "scc_description_level_4"],
         suffixes=["_post", "_pre"],
+        how="outer"
     )
 
-    assert np.allclose(
-        test_data.county_scc_fuel_consump_post, test_data.county_scc_fuel_consump_pre
+    test_data_yard = pd.merge(
+        get_emis_quant_agg_across_carriers_county_scc.loc[
+            lambda df: df.scc_description_level_4 == "Yard Locomotives"].groupby("scc_description_level_4").sum().reset_index(),
+        get_fuel_consump_county_scc[
+            lambda df: df.scc_description_level_4 == "Yard Locomotives"].groupby("scc_description_level_4").sum().reset_index(),
+        on=["scc_description_level_4"],
+        suffixes=["_post", "_pre"],
+        how="outer"
     )
 
+    test_statewide_yard_fuel_consmp = np.allclose(
+        test_data_yard.county_scc_fuel_consump_post,
+        test_data_yard.county_scc_fuel_consump_pre
+    )
+    test_countylevel_non_yard_fuel_consump = np.allclose(
+        test_data_non_yard.county_scc_fuel_consump_post, test_data_non_yard.county_scc_fuel_consump_pre
+    )
+    assert test_statewide_yard_fuel_consmp and test_countylevel_non_yard_fuel_consump
 
-def test_cls1_2017county_fuel_consmp_not_equal_with_ertac(
+
+def test_cls1_2017county_fuel_consmp_almost_equal_with_ertac(
     get_emis_quant_agg_across_carriers, get_ertac_2017_df
 ):
     get_emis_quant_agg_cls1_fri_17 = (
@@ -259,7 +285,7 @@ def test_state_fuel_totals(
     )
 
 
-def test_county_control_tot_not_equal_due_to_indus_addition_to_freight_cls1(
+def test_county_control_tot_equal_to_freight_cls1(
     get_emis_quant_agg_across_carriers, get_county_cls1_prop_input
 ):
     get_emis_quant_agg_across_carriers[
@@ -280,19 +306,33 @@ def test_county_control_tot_not_equal_due_to_indus_addition_to_freight_cls1(
     get_emis_quant_agg_cls1_test = get_emis_quant_agg_cls1.merge(
         cnt_pct, on="stcntyfips"
     )
-    assert not np.allclose(
+    assert np.allclose(
         get_emis_quant_agg_cls1_test.CountyPCT, get_emis_quant_agg_cls1_test.countypct
     )
 
 
-def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
+def test_proj_rt_from_emis_non_yards(get_emis_quant, get_proj_fac):
+    """
+    Test the projection factors for non-yard groups. For yards we sum up
+    class 1, 3, commuter, and passenger fuel consumption at statewide level.
+    It makes it hard to test.
+    Parameters
+    ----------
+    get_emis_quant
+    get_proj_fac
+
+    Returns
+    -------
+
+    """
     # CO2, NH3, and CO have constant rates, so we can get the projection
     # factors from the emission rates for these pollutants.
     co2_nh3_co = get_emis_quant.loc[
         lambda df: (df.pollutant.isin(["CO2", "NH3", "CO"]))
     ]
+    co2_nh3_co["year"] = co2_nh3_co["year"].astype(int)
     co2_nh3_co_emis_2019 = (
-        co2_nh3_co.loc[lambda df: df.year == 2019]
+        co2_nh3_co.loc[lambda df: df.year.astype(int) == 2019]
         .drop(columns="year")
         .rename(columns={"em_quant": "em_quant_2019"})
         .filter(
@@ -323,19 +363,22 @@ def test_proj_rt_from_emis(get_emis_quant, get_proj_fac):
             ],
         )
         .assign(proj_fac_calc=lambda df: df.em_quant / df.em_quant_2019)
-        .merge(get_proj_fac, on=["year", "rr_group"], how="left")
-        .dropna(subset=["proj_fac_calc"])
     )
 
-    mask = ~np.isclose(
-        np.round(co2_nh3_co_emis_with_2019.proj_fac_calc, 5),
-        np.round(co2_nh3_co_emis_with_2019.proj_fac, 5),
+    co2_nh3_co_emis_with_2019_non_yard = (
+        co2_nh3_co_emis_with_2019.loc[lambda df: ~df.rr_group.isna()]
+        .merge(get_proj_fac, on=["year", "rr_group"], how="left")
+        .loc[lambda df: df.em_quant!=0]
     )
-    test = co2_nh3_co_emis_with_2019[mask]
+    mask = ~np.isclose(
+        np.round(co2_nh3_co_emis_with_2019_non_yard.proj_fac_calc, 5),
+        np.round(co2_nh3_co_emis_with_2019_non_yard.proj_fac, 5),
+    )
+    test = co2_nh3_co_emis_with_2019_non_yard[mask]
 
     assert np.allclose(
-        np.round(co2_nh3_co_emis_with_2019.proj_fac_calc, 5),
-        np.round(co2_nh3_co_emis_with_2019.proj_fac, 5),
+        np.round(co2_nh3_co_emis_with_2019_non_yard.proj_fac_calc, 5),
+        np.round(co2_nh3_co_emis_with_2019_non_yard.proj_fac, 5),
     )
 
 
