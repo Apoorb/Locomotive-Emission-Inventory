@@ -1,3 +1,7 @@
+"""
+Get Statewide summaries of CAP and CAP precursors.
+Created by: Apoorb
+"""
 import glob
 import pandas as pd
 import os
@@ -8,18 +12,24 @@ from locoerlt.utilis import PATH_PROCESSED
 
 
 if __name__ == "__main__":
+    # Read controlled and uncontrolled emissions data.
     path_uncntr_emisquant = glob.glob(
         os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")
     )[0]
     path_cntr_emisquant = glob.glob(
         os.path.join(PATH_PROCESSED, "cntr_emis_quant_[0-9]*-*-*.csv")
     )[0]
+    # Output locations.
     uncntr_emisquant = pd.read_csv(path_uncntr_emisquant, index_col=0)
     path_out_dir = os.path.join(PATH_PROCESSED, "report_summaries")
     path_statewide_19_sum = os.path.join(path_out_dir, "statewide_19_sum.xlsx")
     path_statewide_20_cap_ghg_cntr = os.path.join(
         path_out_dir, "statewide_20_cap_ghg_cntr.xlsx"
     )
+    path_county_level_cap_ghg_cntr = os.path.join(
+        path_out_dir, "countylevel_20_cap_ghg_cntr.xlsx"
+    )
+    # Filter to 2019 and CO and get fuel usage.
     statewide_fuel_usage_19 = (
         uncntr_emisquant.loc[
             lambda df: df.year.isin([2019]) & (df.pollutant.isin(["CO"]))
@@ -36,6 +46,8 @@ if __name__ == "__main__":
     )
     statewide_fuel_usage_19.to_excel(path_statewide_19_sum)
 
+    # Uncontrolled. Remove yardnames from the aggregation. Get emissions at
+    # year, SCC, and county-level.
     uncntr_emisquant_no_yardnm = (
         uncntr_emisquant.groupby(
             [
@@ -60,6 +72,9 @@ if __name__ == "__main__":
         )
         .reset_index()
     )
+
+    # Uncontrolled. Filter to 2019 and 2020 emissions. Keep GHG, CAP and CAP
+    # precursors. Aggregate at county level.
     uncntr_emisquant_19_20_cap_ghg = (
         uncntr_emisquant_no_yardnm.loc[
             lambda df: df.year.isin([2019, 2020]) & (df.pol_type.isin(["CAP", "GHG"]))
@@ -81,6 +96,8 @@ if __name__ == "__main__":
         .unstack()
     )
 
+    # Uncontrolled. Filter to 2019 and 2020 emissions. Keep GHG, CAP and CAP
+    # precursors. Aggregate at statewide level.
     uncntr_emisquant_20_cap_ghg_statewide = (
         uncntr_emisquant_no_yardnm.loc[
             lambda df: df.year.isin([2020]) & (df.pol_type.isin(["CAP", "GHG"]))
@@ -92,7 +109,8 @@ if __name__ == "__main__":
         .set_index(["year", "scc_description_level_4", "pollutant"])
         .unstack()
     )
-
+    # Controlled. Remove yardnames from the aggregation. Get emissions at
+    # year, SCC, and county-level.
     cntr_emisquant = pd.read_csv(path_cntr_emisquant, index_col=0)
     cntr_emisquant_no_yardnm = (
         cntr_emisquant.groupby(
@@ -118,7 +136,8 @@ if __name__ == "__main__":
         )
         .reset_index()
     )
-
+    # Controlled. Filter to 2019 and 2020 emissions. Keep GHG, CAP and CAP
+    # precursors. Aggregate at county level.
     cntr_emisquant_19_20_cap_ghg = (
         cntr_emisquant_no_yardnm.loc[
             lambda df: df.year.isin([2019, 2020]) & (df.pol_type.isin(["CAP", "GHG"]))
@@ -139,7 +158,8 @@ if __name__ == "__main__":
         )
         .unstack()
     )
-
+    # Controlled. Filter to 2019 and 2020 emissions. Keep GHG, CAP and CAP
+    # precursors. Aggregate at statewide level.
     cntr_emisquant_20_cap_ghg_statewide = (
         cntr_emisquant_no_yardnm.loc[
             lambda df: df.year.isin([2020]) & (df.pol_type.isin(["CAP", "GHG"]))
@@ -164,11 +184,43 @@ if __name__ == "__main__":
         .sort_index()
         .droplevel(0, axis=1)
         .filter(items=["VOC", "CO",	"NOX", "CO2", "SO2", "NH3",	"PM10-PRI",
-                       "PM25-PRI"
+                       "PM25-PRI", "Lead"
                        ])
     )
 
     cntr_emisquant_20_cap_ghg_statewide.to_excel(path_statewide_20_cap_ghg_cntr)
+
+    cntr_emisquant_20_cap_ghg_cntylev_out = (
+        cntr_emisquant_19_20_cap_ghg
+        .droplevel(0, axis=1)
+        .filter(items=["VOC", "CO", "NOX", "CO2", "SO2", "NH3", "PM10-PRI",
+                           "PM25-PRI", "Lead"
+                           ])
+        .loc[lambda df: ~ df[["VOC", "CO", "NOX", "CO2", "SO2", "NH3", "PM10-PRI",
+                           "PM25-PRI", "Lead"]].eq(0).all(axis=1)]
+        .reset_index()
+        .loc[lambda df: df.year == 2020]
+    )
+    cntr_emisquant_20_cap_ghg_cntylev_out_swkd = (
+        cntr_emisquant_20_cap_ghg_cntylev_out.copy())
+    pol_cols = ['VOC', 'CO', 'NOX', 'CO2', 'SO2', 'NH3', 'PM10-PRI', 'PM25-PRI',
+                'Lead']
+    cntr_emisquant_20_cap_ghg_cntylev_out_swkd[pol_cols] = (
+        cntr_emisquant_20_cap_ghg_cntylev_out_swkd[pol_cols])/ 365
+    with pd.ExcelWriter(path_county_level_cap_ghg_cntr) as f:
+        cntr_emisquant_20_cap_ghg_cntylev_out_swkd.to_excel(f, "cnty_20_cntr_emis_swkd", index=False)
+        cntr_emisquant_20_cap_ghg_cntylev_out.to_excel(f, "cnty_20_cntr_emis_ann", index=False)
+
+
+    cntr_emisquant_20_cap_ghg_cntylev_out.to_excel(
+        path_county_level_cap_ghg_cntr, index=False)
+
+
+    cntr_emisquant_20_cap_ghg_cntylev_out.to_excel(
+        path_county_level_cap_ghg_cntr, index=False)
+
+
+
 
     # uncntr_cntr_emisquant_19_20_cap_ghg_statewide = pd.merge(
     #     uncntr_emisquant_20_cap_ghg_statewide,
@@ -178,3 +230,5 @@ if __name__ == "__main__":
     # )
 
     # TODO: List Yard Locations
+
+
