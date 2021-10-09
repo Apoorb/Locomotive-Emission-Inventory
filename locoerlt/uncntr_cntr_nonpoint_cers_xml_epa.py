@@ -5,7 +5,9 @@ import pyodbc
 from locoerlt.utilis import (
     PATH_PROCESSED,
 )
+import sys
 
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 
 def set_yard_uncntr_cntr_xml(
     path_nonpoint_brgtool_,

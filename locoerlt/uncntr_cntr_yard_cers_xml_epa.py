@@ -3,6 +3,9 @@ import glob
 import pandas as pd
 import pyodbc
 from locoerlt.utilis import PATH_RAW, PATH_PROCESSED, get_snake_case_dict
+import sys
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
 
 
 def get_epa_eis_facility_unit_prc_identifiers(
