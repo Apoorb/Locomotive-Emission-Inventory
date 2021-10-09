@@ -13,6 +13,7 @@ path_cntr_xml_txaer = os.path.join(PATH_PROCESSED, "cntr_cers_tx.xml")
 path_cntr_xml_epa = os.path.join(
     PATH_PROCESSED, "eis_stagging_tables", "nonpoint_bridgetool_cntr.xml"
 )
+
 path_uncntr_xml_txaer = os.path.join(PATH_PROCESSED, "uncntr_cers_tx.xml")
 path_uncntr_xml_epa = os.path.join(
     PATH_PROCESSED, "eis_stagging_tables", "nonpoint_bridgetool_uncntr.xml"
@@ -25,6 +26,13 @@ path_uncntr_yard_xml = os.path.join(
     PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_cntr.xml"
 )
 
+# Test final deliverables
+path_cntr_xml_epa = (
+    r"C:\Users\a-bibeka\Texas A&M Transportation Institute\HMP - TCEQ Projects - Documents\2020 Texas Statewide Locomotive and Rail Yard EI\Tasks\Task8_Reports\Draft_Deliverables_24Sep2021\Appendix E 2020_nonpoint_epa_eis.xml"
+)
+path_cntr_yard_xml = (
+    r"C:\Users\a-bibeka\Texas A&M Transportation Institute\HMP - TCEQ Projects - Documents\2020 Texas Statewide Locomotive and Rail Yard EI\Tasks\Task8_Reports\Draft_Deliverables_24Sep2021\Appendix E 2020_yard_epa_eis.xml"
+)
 path_fueluserail2019 = os.path.join(PATH_RAW, "RR_2019FuelUsage.csv")
 path_proj_fac = os.path.join(PATH_INTERIM, "Projection Factors 04132021.xlsx")
 co2_emis_fac = 2778 * 0.99 * (44 / 12)

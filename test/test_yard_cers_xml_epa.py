@@ -16,8 +16,16 @@ path_cntr_emisquant = glob.glob(
 path_uncntr_yard_xml = os.path.join(
     PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_uncntr.xml"
 )
-path_cntr_yard_xml = os.path.join(
-    PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_cntr.xml"
+# path_cntr_yard_xml = os.path.join(
+#     PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_cntr.xml"
+# )
+path_cntr_yard_xml = (
+    r"C:\Users\a-bibeka\Texas A&M Transportation Institute"
+    r"\HMP - TCEQ Projects - Documents"
+    r"\2020 Texas Statewide Locomotive and Rail Yard EI"
+    r"\Tasks\Task8_Reports\Draft_Deliverables_24Sep2021"
+    r"\Appendix E 2020_yard_epa_eis.xml"
+
 )
 
 ns = {
