@@ -211,17 +211,6 @@ if __name__ == "__main__":
         cntr_emisquant_20_cap_ghg_cntylev_out_swkd.to_excel(f, "cnty_20_cntr_emis_swkd", index=False)
         cntr_emisquant_20_cap_ghg_cntylev_out.to_excel(f, "cnty_20_cntr_emis_ann", index=False)
 
-
-    cntr_emisquant_20_cap_ghg_cntylev_out.to_excel(
-        path_county_level_cap_ghg_cntr, index=False)
-
-
-    cntr_emisquant_20_cap_ghg_cntylev_out.to_excel(
-        path_county_level_cap_ghg_cntr, index=False)
-
-
-
-
     # uncntr_cntr_emisquant_19_20_cap_ghg_statewide = pd.merge(
     #     uncntr_emisquant_20_cap_ghg_statewide,
     #     cntr_emisquant_20_cap_ghg_statewide,
