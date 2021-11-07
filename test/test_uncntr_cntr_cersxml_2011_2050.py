@@ -170,7 +170,7 @@ def test_cntr_input_output_data_equal(year):
 
 @pytest.mark.parametrize("year", range(2011, 2051), ids=range(2011, 2051))
 def test_uncntr_input_output_data_equal(year):
-    path_out_uncntr_fi = os.path.join(path_out_uncntr, f"cntr_{year}_TexAER.xml")
+    path_out_uncntr_fi = os.path.join(path_out_uncntr, f"uncntr_{year}_TexAER.xml")
     uncntr_tree = ET.parse(path_out_uncntr_fi)
     annual_o3d_dict = get_annual_o3d_emissions_df_from_xml(
         templ_tree=uncntr_tree,
