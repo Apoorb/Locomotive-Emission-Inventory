@@ -2,12 +2,10 @@ import os
 import xml
 import xml.etree.ElementTree as ET
 import numpy as np
-import pytest
-from lxml import etree as lxml_etree
 import glob
 import pandas as pd
-from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
-from locoerlt.xml_2011_2050.uncntr_cntr_cersxml import (
+from locoerlt.utilis import PATH_RAW, PATH_PROCESSED, get_snake_case_dict
+from analysis.scratch.xml_2011_2050_xiao.uncntr_cntr_cersxml_xiao import (
     clean_up_cntr_emisquant,
     clean_up_uncntr_emisquant,
 )
