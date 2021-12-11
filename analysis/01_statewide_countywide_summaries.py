@@ -29,6 +29,9 @@ if __name__ == "__main__":
     path_county_level_cap_ghg_cntr = os.path.join(
         path_out_dir, "countylevel_20_cap_ghg_cntr.xlsx"
     )
+    path_county_level_cap_ghg_uncntr = os.path.join(
+        path_out_dir, "countylevel_20_cap_ghg_uncntr.xlsx"
+    )
     # Filter to 2019 and CO and get fuel usage.
     statewide_fuel_usage_19 = (
         uncntr_emisquant.loc[
@@ -95,6 +98,29 @@ if __name__ == "__main__":
         )
         .unstack()
     )
+
+    uncntr_emisquant_20_cap_ghg_cntylev_out = (
+        uncntr_emisquant_19_20_cap_ghg
+        .droplevel(0, axis=1)
+        .filter(items=["VOC", "CO", "NOX", "SO2", "NH3", "PM10-PRI",
+                           "PM25-PRI", "Lead"
+                           ])
+        .loc[lambda df: ~ df[["VOC", "CO", "NOX", "SO2", "NH3", "PM10-PRI",
+                           "PM25-PRI", "Lead"]].eq(0).all(axis=1)]
+        .reset_index()
+        .loc[lambda df: df.year == 2020]
+        .drop("scc_description_level_4", axis=1)
+    )
+    uncntr_emisquant_20_cap_ghg_cntylev_out_swkd = (
+        uncntr_emisquant_20_cap_ghg_cntylev_out.copy())
+    pol_cols = ['VOC', 'CO', 'NOX', 'SO2', 'NH3', 'PM10-PRI', 'PM25-PRI',
+                'Lead']
+    uncntr_emisquant_20_cap_ghg_cntylev_out_swkd[pol_cols] = (
+        uncntr_emisquant_20_cap_ghg_cntylev_out_swkd[pol_cols])/ 365
+    with pd.ExcelWriter(path_county_level_cap_ghg_uncntr) as f:
+        uncntr_emisquant_20_cap_ghg_cntylev_out_swkd.to_excel(f, "uncnty_20_cntr_emis_swkd", index=False)
+        uncntr_emisquant_20_cap_ghg_cntylev_out.to_excel(f, "uncnty_20_cntr_emis_ann", index=False)
+
 
     # Uncontrolled. Filter to 2019 and 2020 emissions. Keep GHG, CAP and CAP
     # precursors. Aggregate at statewide level.
@@ -183,7 +209,7 @@ if __name__ == "__main__":
         .unstack()
         .sort_index()
         .droplevel(0, axis=1)
-        .filter(items=["VOC", "CO",	"NOX", "CO2", "SO2", "NH3",	"PM10-PRI",
+        .filter(items=["VOC", "CO",	"NOX", "SO2", "NH3",	"PM10-PRI",
                        "PM25-PRI", "Lead"
                        ])
     )
@@ -193,17 +219,18 @@ if __name__ == "__main__":
     cntr_emisquant_20_cap_ghg_cntylev_out = (
         cntr_emisquant_19_20_cap_ghg
         .droplevel(0, axis=1)
-        .filter(items=["VOC", "CO", "NOX", "CO2", "SO2", "NH3", "PM10-PRI",
+        .filter(items=["VOC", "CO", "NOX", "SO2", "NH3", "PM10-PRI",
                            "PM25-PRI", "Lead"
                            ])
-        .loc[lambda df: ~ df[["VOC", "CO", "NOX", "CO2", "SO2", "NH3", "PM10-PRI",
+        .loc[lambda df: ~ df[["VOC", "CO", "NOX", "SO2", "NH3", "PM10-PRI",
                            "PM25-PRI", "Lead"]].eq(0).all(axis=1)]
         .reset_index()
         .loc[lambda df: df.year == 2020]
+        .drop("scc_description_level_4", axis=1)
     )
     cntr_emisquant_20_cap_ghg_cntylev_out_swkd = (
         cntr_emisquant_20_cap_ghg_cntylev_out.copy())
-    pol_cols = ['VOC', 'CO', 'NOX', 'CO2', 'SO2', 'NH3', 'PM10-PRI', 'PM25-PRI',
+    pol_cols = ['VOC', 'CO', 'NOX', 'SO2', 'NH3', 'PM10-PRI', 'PM25-PRI',
                 'Lead']
     cntr_emisquant_20_cap_ghg_cntylev_out_swkd[pol_cols] = (
         cntr_emisquant_20_cap_ghg_cntylev_out_swkd[pol_cols])/ 365
