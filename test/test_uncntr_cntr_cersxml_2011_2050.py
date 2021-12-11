@@ -12,10 +12,12 @@ from locoerlt.uncntr_cntr_cersxml_2011_2050 import (
     clean_up_uncntr_emisquant,
 )
 
-path_out_uncntr = os.path.join(r"C:\Users\a-bibeka\PycharmProjects\Loco-ERLT\data"
-                             r"\processed\TexAER_XMLs")
-path_out_cntr = os.path.join(r"C:\Users\a-bibeka\PycharmProjects\Loco-ERLT\data"
-                             r"\processed\TexAER_XMLs")
+path_out_uncntr = os.path.join(
+    r"C:\Users\a-bibeka\PycharmProjects\Loco-ERLT\data" r"\processed\TexAER_XMLs"
+)
+path_out_cntr = os.path.join(
+    r"C:\Users\a-bibeka\PycharmProjects\Loco-ERLT\data" r"\processed\TexAER_XMLs"
+)
 path_uncntr_emisquant = glob.glob(
     os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")
 )[0]
@@ -53,7 +55,7 @@ def get_annual_o3d_emissions_df_from_xml(
     templ_tree: xml.etree.ElementTree.Element,
     pol_tot_em_ton_col_nm: str,
     pol_tot_em_daily_ton_col_nm: str,
-    ns
+    ns,
 ):
     templ_root = templ_tree.getroot()
     loc_elem_list = templ_root.findall(".//payload:Location", ns)
@@ -135,13 +137,12 @@ def test_cntr_input_output_data_equal(year):
         templ_tree=cntr_tree,
         pol_tot_em_ton_col_nm="controlled_em_quant_ton_str",
         pol_tot_em_daily_ton_col_nm="controlled_em_quant_ton_daily_str",
-        ns=ns
+        ns=ns,
     )
     annual_df = annual_o3d_dict["annual_df"]
     o3d_df = annual_o3d_dict["o3d_df"]
     cntr_emisquant_yr_fil_scc = clean_up_cntr_emisquant(
-        path_cntr_emisquant_=path_cntr_emisquant,
-        year_=year
+        path_cntr_emisquant_=path_cntr_emisquant, year_=year
     )["raw_data"]
 
     test_data_annual = pd.merge(
@@ -176,13 +177,12 @@ def test_uncntr_input_output_data_equal(year):
         templ_tree=uncntr_tree,
         pol_tot_em_ton_col_nm="uncontrolled_em_quant_ton_str",
         pol_tot_em_daily_ton_col_nm="uncontrolled_em_quant_ton_daily_str",
-        ns=ns
+        ns=ns,
     )
     annual_df = annual_o3d_dict["annual_df"]
     o3d_df = annual_o3d_dict["o3d_df"]
     uncntr_emisquant_yr_fil_scc = clean_up_uncntr_emisquant(
-        path_uncntr_emisquant_=path_uncntr_emisquant,
-        year_=year
+        path_uncntr_emisquant_=path_uncntr_emisquant, year_=year
     )["raw_data"]
 
     test_data_annual = pd.merge(

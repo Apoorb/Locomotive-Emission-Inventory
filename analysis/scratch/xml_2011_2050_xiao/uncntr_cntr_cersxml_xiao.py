@@ -6,8 +6,9 @@ import pandas as pd
 import os
 import sys
 
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"),
-                                             "../../../locoerlt")))
+sys.path.append(
+    os.path.abspath(os.path.join(os.path.dirname("__file__"), "../../../locoerlt"))
+)
 from locoerlt.utilis import PATH_RAW, PATH_INTERIM, PATH_PROCESSED, get_snake_case_dict
 from locoerlt.cersxml_templ import (
     set_creation_datetime,

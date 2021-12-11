@@ -262,10 +262,16 @@ def test_county_all_cls1_state_tots(get_county_cls1_freight_prop_py_cd):
     #  counties and class 1 carriers, such that the recomputed fuel for each
     #  carrier at state level matches the observed data. This test should
     #  fail as of 4/16/2021.
-    st_estimated_all = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_all_cls1_estimated
+    st_estimated_all = (
+        get_county_cls1_freight_prop_py_cd.st_fuel_consmp_all_cls1_estimated
+    )
     st_observed_all = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_all_cls1
-    st_estimated_by_carrier = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1_estimated
-    st_observed_data_by_carrier = get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1
+    st_estimated_by_carrier = (
+        get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1_estimated
+    )
+    st_observed_data_by_carrier = (
+        get_county_cls1_freight_prop_py_cd.st_fuel_consmp_by_cls1
+    )
     print(
         "Will fail. Use TransCAD or some other software to allocate fuel to "
         "different counties and class 1 carriers, such that the recomputed "
@@ -314,7 +320,9 @@ def test_county_all_cls1_state_tots_using_fuel_data(
         "different counties and class 1 carriers, such that the recomputed "
         "fuel for each carrier at state level matches the observed data. "
     )
-    will_fail = not is_cls1_input_fuel_eq_st_fuel_estimated & is_cls1_input_fuel_eq_st_fuel_data
+    will_fail = (
+        not is_cls1_input_fuel_eq_st_fuel_estimated & is_cls1_input_fuel_eq_st_fuel_data
+    )
     assert will_fail
 
 

@@ -145,30 +145,41 @@ def test_fuel_consump_in_emis_quant_vs_input(
 
     test_data_non_yard = pd.merge(
         get_emis_quant_agg_across_carriers_county_scc.loc[
-            lambda df: df.scc_description_level_4 != "Yard Locomotives"],
+            lambda df: df.scc_description_level_4 != "Yard Locomotives"
+        ],
         get_fuel_consump_county_scc[
-            lambda df: df.scc_description_level_4 != "Yard Locomotives"],
+            lambda df: df.scc_description_level_4 != "Yard Locomotives"
+        ],
         on=["stcntyfips", "scc_description_level_4"],
         suffixes=["_post", "_pre"],
-        how="outer"
+        how="outer",
     )
 
     test_data_yard = pd.merge(
         get_emis_quant_agg_across_carriers_county_scc.loc[
-            lambda df: df.scc_description_level_4 == "Yard Locomotives"].groupby("scc_description_level_4").sum().reset_index(),
+            lambda df: df.scc_description_level_4 == "Yard Locomotives"
+        ]
+        .groupby("scc_description_level_4")
+        .sum()
+        .reset_index(),
         get_fuel_consump_county_scc[
-            lambda df: df.scc_description_level_4 == "Yard Locomotives"].groupby("scc_description_level_4").sum().reset_index(),
+            lambda df: df.scc_description_level_4 == "Yard Locomotives"
+        ]
+        .groupby("scc_description_level_4")
+        .sum()
+        .reset_index(),
         on=["scc_description_level_4"],
         suffixes=["_post", "_pre"],
-        how="outer"
+        how="outer",
     )
 
     test_statewide_yard_fuel_consmp = np.allclose(
         test_data_yard.county_scc_fuel_consump_post,
-        test_data_yard.county_scc_fuel_consump_pre
+        test_data_yard.county_scc_fuel_consump_pre,
     )
     test_countylevel_non_yard_fuel_consump = np.allclose(
-        test_data_non_yard.county_scc_fuel_consump_post, test_data_non_yard.county_scc_fuel_consump_pre
+        test_data_non_yard.county_scc_fuel_consump_post,
+        test_data_non_yard.county_scc_fuel_consump_pre,
     )
     assert test_statewide_yard_fuel_consmp and test_countylevel_non_yard_fuel_consump
 
@@ -349,26 +360,23 @@ def test_proj_rt_from_emis_non_yards(get_emis_quant, get_proj_fac):
         )
     )
 
-    co2_nh3_co_emis_with_2019 = (
-        co2_nh3_co.merge(
-            co2_nh3_co_emis_2019,
-            on=[
-                "stcntyfips",
-                "carrier",
-                "rr_netgrp",
-                "rr_group",
-                "scc_description_level_4",
-                "yardname_v1",
-                "pollutant",
-            ],
-        )
-        .assign(proj_fac_calc=lambda df: df.em_quant / df.em_quant_2019)
-    )
+    co2_nh3_co_emis_with_2019 = co2_nh3_co.merge(
+        co2_nh3_co_emis_2019,
+        on=[
+            "stcntyfips",
+            "carrier",
+            "rr_netgrp",
+            "rr_group",
+            "scc_description_level_4",
+            "yardname_v1",
+            "pollutant",
+        ],
+    ).assign(proj_fac_calc=lambda df: df.em_quant / df.em_quant_2019)
 
     co2_nh3_co_emis_with_2019_non_yard = (
         co2_nh3_co_emis_with_2019.loc[lambda df: ~df.rr_group.isna()]
         .merge(get_proj_fac, on=["year", "rr_group"], how="left")
-        .loc[lambda df: df.em_quant!=0]
+        .loc[lambda df: df.em_quant != 0]
     )
     mask = ~np.isclose(
         np.round(co2_nh3_co_emis_with_2019_non_yard.proj_fac_calc, 5),

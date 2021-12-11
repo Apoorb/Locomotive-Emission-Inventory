@@ -351,8 +351,12 @@ if __name__ == "__main__":
     year_list = list(range(2011, 2051))  # add the list of years
     for year in year_list:
 
-        path_out_cntr = os.path.join(PATH_PROCESSED, "TexAER_XMLs", f"cntr_{year}_TexAER.xml")
-        path_out_uncntr = os.path.join(PATH_PROCESSED, "TexAER_XMLs", f"uncntr_{year}_TexAER.xml")
+        path_out_cntr = os.path.join(
+            PATH_PROCESSED, "TexAER_XMLs", f"cntr_{year}_TexAER.xml"
+        )
+        path_out_uncntr = os.path.join(
+            PATH_PROCESSED, "TexAER_XMLs", f"uncntr_{year}_TexAER.xml"
+        )
         uncntr_emisquant_yr_fil_scc_dict = clean_up_uncntr_emisquant(
             path_uncntr_emisquant_=path_uncntr_emisquant, year_=year
         )
@@ -371,7 +375,7 @@ if __name__ == "__main__":
             "Texas counties"
         )
         assert (
-                       set(cntr_emisquant_yr_fil_scc.stcntyfips_str) - set(tx_counties_list)
+            set(cntr_emisquant_yr_fil_scc.stcntyfips_str) - set(tx_counties_list)
         ) == set(), (
             "cntr_emisquant_yr_fil_scc counties should be a subset of all "
             "Texas counties"
