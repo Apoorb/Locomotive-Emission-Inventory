@@ -101,14 +101,19 @@ def get_annual_o3d_pollutants_erg(
             "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
         )
     )
-    o3d_pollutant_elements = (
+    o3d_pollutant_elements_all = (
         templ_root_payload_cers_loc_locemprc_report_period_O3D_.findall(
             "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
         )
     )
+    o3d_pollutant_elements_filt = []
+    for elem in o3d_pollutant_elements_all:
+        if elem.text in ["CO", "NOX", "VOC"]:
+            o3d_pollutant_elements_filt.append(elem)
+
     return {
         "annual_pollutant_elements": annual_pollutant_elements,
-        "o3d_pollutant_elements": o3d_pollutant_elements,
+        "o3d_pollutant_elements": o3d_pollutant_elements_filt,
     }
 
 

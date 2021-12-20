@@ -173,7 +173,7 @@ def set_emissiosn_yard_xml(uncntr_cntr_emisquant_yards_2020_, conn_, cursor_):
     uncntr_cntr_emisquant_yards_2020_emisssions_o3d = (
         uncntr_cntr_emisquant_yards_2020_.loc[
             lambda df: df.pollutant.isin(
-                ["CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]
+                ["NOX", "CO", "VOC"]
             )
         ]
         .assign(
