@@ -347,23 +347,23 @@ if __name__ == "__main__":
     ]
     non_point_scc_list.sort()
 
-    uncntr_emisquant_2020_fil_scc_dict = clean_up_uncntr_emisquant(
-        path_uncntr_emisquant_=path_uncntr_emisquant
-    )
+    # uncntr_emisquant_2020_fil_scc_dict = clean_up_uncntr_emisquant(
+    #     path_uncntr_emisquant_=path_uncntr_emisquant
+    # )
     cntr_emisquant_2020_fil_scc_dict = clean_up_cntr_emisquant(
         path_cntr_emisquant_=path_cntr_emisquant
     )
-    uncntr_emisquant_2020_fil_scc = uncntr_emisquant_2020_fil_scc_dict["raw_data"]
+    # uncntr_emisquant_2020_fil_scc = uncntr_emisquant_2020_fil_scc_dict["raw_data"]
     cntr_emisquant_2020_fil_scc = cntr_emisquant_2020_fil_scc_dict["raw_data"]
-    uncntr_emisquant_2020_fil_scc_grp = uncntr_emisquant_2020_fil_scc_dict["grps"]
+    # uncntr_emisquant_2020_fil_scc_grp = uncntr_emisquant_2020_fil_scc_dict["grps"]
     cntr_emisquant_2020_fil_scc_grp = cntr_emisquant_2020_fil_scc_dict["grps"]
-    assert (
-        set(uncntr_emisquant_2020_fil_scc.reset_index().stcntyfips_str)
-        - set(tx_counties_list)
-    ) == set(), (
-        "uncntr_emisquant_2020_fil_scc counties should be a subset of all "
-        "Texas counties"
-    )
+    # assert (
+    #     set(uncntr_emisquant_2020_fil_scc.reset_index().stcntyfips_str)
+    #     - set(tx_counties_list)
+    # ) == set(), (
+    #     "uncntr_emisquant_2020_fil_scc counties should be a subset of all "
+    #     "Texas counties"
+    # )
     assert (
         set(cntr_emisquant_2020_fil_scc.stcntyfips_str) - set(tx_counties_list)
     ) == set(), (
@@ -372,17 +372,16 @@ if __name__ == "__main__":
     )
 
     register_all_namespaces(path_xml_templ)
-    uncntr_xml_tree = get_uncntr_cntr_xml(
-        path_xml_templ=path_xml_templ,
-        grp_uncntr_cntr=uncntr_emisquant_2020_fil_scc_grp,
-        pol_ton_col="uncontrolled_em_quant_ton_str",
-        pol_ton_daily_col="uncontrolled_em_quant_ton_daily_str",
-        tx_counties_list=tx_counties_list,
-        non_point_scc_list=non_point_scc_list,
-        doc_id="locomotives_uncntr_cers_aerr_2020_xml",
-    )
-    write_xml(xml_tree=uncntr_xml_tree, path_out_xml=path_out_uncntr)
-
+    # uncntr_xml_tree = get_uncntr_cntr_xml(
+    #     path_xml_templ=path_xml_templ,
+    #     grp_uncntr_cntr=uncntr_emisquant_2020_fil_scc_grp,
+    #     pol_ton_col="uncontrolled_em_quant_ton_str",
+    #     pol_ton_daily_col="uncontrolled_em_quant_ton_daily_str",
+    #     tx_counties_list=tx_counties_list,
+    #     non_point_scc_list=non_point_scc_list,
+    #     doc_id="locomotives_uncntr_cers_aerr_2020_xml",
+    # )
+    # write_xml(xml_tree=uncntr_xml_tree, path_out_xml=path_out_uncntr)
     cntr_xml_tree = get_uncntr_cntr_xml(
         path_xml_templ=path_xml_templ,
         grp_uncntr_cntr=cntr_emisquant_2020_fil_scc_grp,

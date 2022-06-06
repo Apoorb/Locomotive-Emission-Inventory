@@ -1,5 +1,6 @@
 import xml
 import xml.etree.ElementTree as ET
+from lxml import etree as lxml_etree
 import time
 import datetime
 import glob
@@ -101,19 +102,14 @@ def get_annual_o3d_pollutants_erg(
             "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
         )
     )
-    o3d_pollutant_elements_all = (
+    o3d_pollutant_elements = (
         templ_root_payload_cers_loc_locemprc_report_period_O3D_.findall(
             "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
         )
     )
-    o3d_pollutant_elements_filt = []
-    for elem in o3d_pollutant_elements_all:
-        if elem.text in ["CO", "NOX", "VOC"]:
-            o3d_pollutant_elements_filt.append(elem)
-
     return {
         "annual_pollutant_elements": annual_pollutant_elements,
-        "o3d_pollutant_elements": o3d_pollutant_elements_filt,
+        "o3d_pollutant_elements": o3d_pollutant_elements,
     }
 
 
@@ -129,13 +125,14 @@ def set_all_emissions_to_zero(
 def delete_pollutant_complexes_not_in_tti_output(
     missing_tti_pollutants: list,
     templ_root_payload_cers_: xml.etree.ElementTree.Element,
+    reporting_period: str,
 ):
     for pol in list(missing_tti_pollutants):
         delete_report_period_em_tags_list = templ_root_payload_cers_.findall(
             "payload:Location"
             "/payload:LocationEmissionsProcess"
             "/payload:ReportingPeriod"
-            "/[payload:ReportingPeriodTypeCode='A']"
+            f"/[payload:ReportingPeriodTypeCode='{reporting_period}']"
             "/payload:ReportingPeriodEmissions"
             f"/[payload:PollutantCode='{pol}']",
             ns,
@@ -144,7 +141,7 @@ def delete_pollutant_complexes_not_in_tti_output(
             "payload:Location"
             "/payload:LocationEmissionsProcess"
             "/payload:ReportingPeriod"
-            "/[payload:ReportingPeriodTypeCode='A']"
+            f"/[payload:ReportingPeriodTypeCode='{reporting_period}']"
             "/payload:ReportingPeriodEmissions"
             f"/[payload:PollutantCode='{pol}']...",
             ns,
@@ -183,15 +180,21 @@ def create_pollutant_complexes_in_tti_output_not_in_erg(
 
 
 def modify_payload(
-    templ_root_: xml.etree.ElementTree.Element, tti_pol_list_: list, ns: dict
+    templ_root_: xml.etree.ElementTree.Element,
+    tti_pol_list_a_: list,
+    tti_pol_list_o3d_: list,
+    ns: dict,
 ) -> xml.etree.ElementTree.Element:
 
+    templ_root_.find(".//header:Property/[header:PropertyValue='Nonroad']/header:PropertyValue", ns).text = "Nonpoint"
     templ_root_payload = templ_root_.find("header:Payload", ns)
     templ_root_payload_cers = templ_root_payload.find("payload:CERS", ns)
     delele_253_county_loc(templ_root_payload_cers_=templ_root_payload_cers)
     assert len(templ_root_payload_cers.findall("payload:Location", ns)) == 1, (
         "Above operation didn't delete all " "counties."
     )
+    templ_root_.find(".//payload:UserIdentifier", ns).text = "XCMCLAIN"
+
     templ_root_payload_cers_loc = templ_root_payload_cers.find("payload:Location", ns)
     set_generic_stateandcountyfipscode(
         templ_root_payload_cers_loc_=templ_root_payload_cers_loc
@@ -225,25 +228,116 @@ def modify_payload(
         ns_=ns,
     )
     annual_pollutant_elements = annual_o3d_pol_dict["annual_pollutant_elements"]
-    txerr_pols = set(map(lambda elem: elem.text, annual_pollutant_elements))
-    missing_tti_pollutants = txerr_pols - tti_pol_list_
-    extra_tti_pollutants = tti_pol_list_ - txerr_pols
+    txerr_pols_a = set(map(lambda elem: elem.text, annual_pollutant_elements))
+    missing_tti_pollutants_a = txerr_pols_a - tti_pol_list_a_
+    extra_tti_pollutants_a = tti_pol_list_a_ - txerr_pols_a
+
+    o3d_pollutant_elements = annual_o3d_pol_dict["o3d_pollutant_elements"]
+    txerr_pols_o3d = set(map(lambda elem: elem.text, o3d_pollutant_elements))
+    missing_tti_pollutants_o3d = txerr_pols_o3d - tti_pol_list_o3d_
+
     set_all_emissions_to_zero(
         templ_root_payload_cers_loc_locemprc_=templ_root_payload_cers_loc_locemprc,
         ns_=ns,
     )
     delete_pollutant_complexes_not_in_tti_output(
-        missing_tti_pollutants=missing_tti_pollutants,
+        missing_tti_pollutants=missing_tti_pollutants_a,
         templ_root_payload_cers_=templ_root_payload_cers,
+        reporting_period="A",
     )
+    delete_pollutant_complexes_not_in_tti_output(
+        missing_tti_pollutants=missing_tti_pollutants_o3d,
+        templ_root_payload_cers_=templ_root_payload_cers,
+        reporting_period="O3D",
+    )
+
     templ_pol_rep_per_cpy = deepcopy_reportingperiodemissions_complex_for_template(
         templ_root_payload_cers_loc_locemprc_report_period_A_=templ_root_payload_cers_loc_locemprc_report_period_A,
     )
     create_pollutant_complexes_in_tti_output_not_in_erg(
-        extra_tti_pollutants=extra_tti_pollutants,
+        extra_tti_pollutants=extra_tti_pollutants_a,
         templ_pol_rep_per_cpy_=templ_pol_rep_per_cpy,
         templ_root_payload_cers_loc_locemprc_report_period_A_=templ_root_payload_cers_loc_locemprc_report_period_A,
     )
+
+    all_reporting_periods = templ_root_payload_cers_loc_locemprc.findall(
+        "payload:ReportingPeriod/payload:ReportingPeriodEmissions", ns
+    )
+    spec_pol = [
+        "100414",
+        "106990",
+        "107028",
+        "108883",
+        "110543",
+        "120127",
+        "123386",
+        "129000",
+        "1330207",
+        "1746016",
+        "18540299",
+        "191242",
+        "193395",
+        "19408743",
+        "205992",
+        "206440",
+        "207089",
+        "208968",
+        "218019",
+        "3268879",
+        "35822469",
+        "39001020",
+        "50000",
+        "50328",
+        "51207319",
+        "53703",
+        "540841",
+        "56553",
+        "57117314",
+        "57117416",
+        "57117449",
+        "57653857",
+        "67562394",
+        "70648269",
+        "71432",
+        "72918219",
+        "7439965",
+        "7439976",
+        "7440020",
+        "7440382",
+        "75070",
+        "83329",
+        "85018",
+        "86737",
+        "91203",
+    ]
+    for rep_per in all_reporting_periods:
+        emis_calc_mthd_cd = ET.Element("cer:EmissionCalculationMethodCode")
+        emis_calc_comment = ET.Element("cer:EmissionsComment")
+        pol = rep_per.find("payload:PollutantCode", ns).text
+        if pol in ["7439921", "NH3"]:
+            emis_calc_mthd_cd.text = "13"
+            if pol == "7439921":
+                emis_calc_comment.text = "Based on https://www.tceq.texas.gov/assets/public/implementation/air/am/contracts/reports/ei/582155153802FY15-20150826-erg-locomotive_2014aerr_inventory_trends_2008to2040.pdf"
+            elif pol == "NH3":
+                emis_calc_comment.text = "Based on Table III-6, 2nd row in https://19january2017snapshot.epa.gov/sites/production/files/2015-08/documents/eiip_areasourcesnh3.pdf"
+        elif pol in ["CO", "CO2", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC"]:
+            emis_calc_mthd_cd.text = "8"
+            if pol == "NOX":
+                emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt. Also considers TxLED factor."
+            elif pol == "CO2":
+                emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+            elif pol == "SO2":
+                emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+            else:
+                emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+        elif pol in spec_pol:
+            emis_calc_mthd_cd.text = "5"
+            emis_calc_comment.text = "Most recent EPA speciation table"
+        else:
+            raise ValueError("pollutant not handled in if-elif.")
+        rep_per.append(emis_calc_mthd_cd)
+        rep_per.append(emis_calc_comment)
+
 
 
 def print_xml_lines(tree_elem: xml.etree.ElementTree.Element, max_lines=10) -> None:
@@ -289,7 +383,8 @@ if __name__ == "__main__":
     path_emis_rate = glob.glob(
         os.path.join(PATH_INTERIM, f"emission_factor_[" f"0-9]*-*-*.csv")
     )[0]
-    tti_pol_list = set(pd.read_csv(path_emis_rate).pollutant.unique())
+    tti_pol_list_a = set(pd.read_csv(path_emis_rate).pollutant.unique())
+    tti_pol_list_o3d = set(["NOX", "VOC", "CO"])
     path_dir_templ = os.path.join(PATH_RAW, "ERG")
     path_templ = os.path.join(path_dir_templ, "rail2020-Uncontrolled.xml")
     path_out_templ = os.path.join(PATH_INTERIM, "xml_rail_templ_tti.xml")
@@ -306,5 +401,17 @@ if __name__ == "__main__":
     print(templ_root.attrib)
     templ_root_header = modify_template_header(templ_root_=templ_root, ns=ns)
     print_xml_lines(tree_elem=templ_root, max_lines=40)
-    modify_payload(templ_root_=templ_root, tti_pol_list_=tti_pol_list, ns=ns)
+    modify_payload(
+        templ_root_=templ_root,
+        tti_pol_list_a_=tti_pol_list_a,
+        tti_pol_list_o3d_=tti_pol_list_o3d,
+        ns=ns,
+    )
     templ_tree.write(path_out_templ, encoding="utf-8", xml_declaration=True)
+    lxml_etree_root = lxml_etree.parse(
+        str(path_out_templ),
+        parser=lxml_etree.XMLParser(remove_blank_text=True, remove_comments=True),
+    )
+    lxml_etree_root.write(
+        str(path_out_templ), pretty_print=True, encoding="utf-8", xml_declaration=True
+    )

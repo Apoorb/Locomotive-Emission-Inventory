@@ -172,9 +172,7 @@ def set_emissiosn_yard_xml(uncntr_cntr_emisquant_yards_2020_, conn_, cursor_):
 
     uncntr_cntr_emisquant_yards_2020_emisssions_o3d = (
         uncntr_cntr_emisquant_yards_2020_.loc[
-            lambda df: df.pollutant.isin(
-                ["NOX", "CO", "VOC"]
-            )
+            lambda df: df.pollutant.isin(["NOX", "CO", "VOC"])
         ]
         .assign(
             ReportingPeriodTypeCode="O3D",
@@ -220,21 +218,21 @@ if __name__ == "__main__":
         PATH_PROCESSED, "imputed_ertac_yard_2017_with_eis_unit_prc.xlsx"
     )
     path_uncntr_yard_brgtool = os.path.join(
-        PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_uncntr.accdb"
+        PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_uncntr_v2.accdb"
     )
     path_cntr_yard_brgtool = os.path.join(
-        PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_cntr.accdb"
+        PATH_PROCESSED, "eis_stagging_tables", "yard_bridgetool_cntr_v2.accdb"
     )
     epa_eis_facility_unit_prc_identifiers = get_epa_eis_facility_unit_prc_identifiers(
         path_epa_eis_info_=path_epa_eis_info, path_cntr_emisquant_=path_cntr_emisquant
     )
     epa_eis_facility_unit_prc_identifiers.to_excel(path_yard_prcs, index=False)
-    set_yard_uncntr_cntr_xml(
-        path_yard_brgtool_=path_uncntr_yard_brgtool,
-        path_uncntr_cntr_emisquant_=path_uncntr_emisquant,
-        path_yard_prcs_=path_yard_prcs,
-        emis_quant_ton_col="uncontrolled_em_quant_ton",
-    )
+    # set_yard_uncntr_cntr_xml(
+    #     path_yard_brgtool_=path_uncntr_yard_brgtool,
+    #     path_uncntr_cntr_emisquant_=path_uncntr_emisquant,
+    #     path_yard_prcs_=path_yard_prcs,
+    #     emis_quant_ton_col="uncontrolled_em_quant_ton",
+    # )
     set_yard_uncntr_cntr_xml(
         path_yard_brgtool_=path_cntr_yard_brgtool,
         path_uncntr_cntr_emisquant_=path_cntr_emisquant,
