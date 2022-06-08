@@ -164,7 +164,9 @@ cntr_emis_19_20_linehaul_cls3_p_c_["emis_ton_by_carrier"] = (
     cntr_emis_19_20_linehaul_cls3_p_c_.controlled_em_quant_ton
     * cntr_emis_19_20_linehaul_cls3_p_c_.carrier_dist
 )
-cntr_emis_19_20_linehaul_cls3_p_c_ = cntr_emis_19_20_linehaul_cls3_p_c_.drop(columns="controlled_em_quant_ton")
+cntr_emis_19_20_linehaul_cls3_p_c_ = cntr_emis_19_20_linehaul_cls3_p_c_.drop(
+    columns="controlled_em_quant_ton"
+)
 cntr_cls3_pc_c_lh = cntr_emis_19_20_linehaul_cls3_p_c_.merge(
     fuel_cnsp_cls3_p_c, on=["carrier"]
 )
@@ -331,15 +333,25 @@ narl20_cls1_3_p_c_gpd_v1 = narl20_cls1_3_p_c_gpd.filter(
         "pollutant": "Pollutant",
         "pol_desc": "Pol Desc",
         "em_fac": "Emission Factor (grams/gallon)",
-        "emis_linehaul":  "Emission (U.S. Tons)",
+        "emis_linehaul": "Emission (U.S. Tons)",
         "geometry": "geometry",
     }
 )
+narl20_cls1_3_p_c_gpd_v1["State-County FIPS"] = narl20_cls1_3_p_c_gpd_v1[
+    "State-County FIPS"
+].astype(int)
+narl20_cls1_3_p_c_gpd_v1["Emission (U.S. Tons/Mile)"] = (
+    narl20_cls1_3_p_c_gpd_v1["Emission (U.S. Tons)"] / narl20_cls1_3_p_c_gpd_v1["Miles"]
+)
 
-narl20_cls1_3_p_c_gpd_v1["Emission (U.S. Tons/Mile)"] = narl20_cls1_3_p_c_gpd_v1["Emission (U.S. Tons)"] / narl20_cls1_3_p_c_gpd_v1["Miles"]
 
-
-test = narl20_cls1_3_p_c_gpd_v1.groupby(["SCC Description Level 4", "Pollutant", "Year"])["Emission (U.S. Tons)"].sum().reset_index()
+test = (
+    narl20_cls1_3_p_c_gpd_v1.groupby(["SCC Description Level 4", "Pollutant", "Year"])[
+        "Emission (U.S. Tons)"
+    ]
+    .sum()
+    .reset_index()
+)
 #
 # co2_emis_fac_grams_per_gal = 10084.14
 # us_ton_to_grams=907185
@@ -350,10 +362,7 @@ test = narl20_cls1_3_p_c_gpd_v1.groupby(["SCC Description Level 4", "Pollutant",
 # fuel_cnsp_back["Fuel Consumption (Gallon/Mile)"] = fuel_cnsp_back['Emission (U.S. Ton/Mile)'] / co2_emis_fac_us_tons_per_gal
 
 
-conn = psycopg2.connect(
-    f"dbname=postgres user=postgres "
-    f"password=civil123"
-)
+conn = psycopg2.connect(f"dbname=postgres user=postgres " f"password=civil123")
 conn.set_session(autocommit=True)
 cur = conn.cursor()
 cur.execute("DROP DATABASE locoei_lh_emis;")
@@ -361,10 +370,7 @@ cur.execute("COMMIT")
 cur.execute("CREATE DATABASE locoei_lh_emis;")
 conn.close()
 
-conn = psycopg2.connect(
-    f"dbname=locoei_lh_emis user=postgres "
-    f"password=civil123"
-)
+conn = psycopg2.connect(f"dbname=locoei_lh_emis user=postgres " f"password=civil123")
 conn.set_session(autocommit=True)
 cur = conn.cursor()
 cur.execute("CREATE EXTENSION postgis;")
