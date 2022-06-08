@@ -56,13 +56,27 @@ cntr_emis_19_20_yrds = (
             "site_longitude": "Site Longitude",
         }
     )
+    .loc[
+        lambda df: df.Pollutant.isin(
+            ["7439921", "CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC", "CO2"]
+        )
+    ]
 )
+cntr_emis_19_20_yrds["State-County FIPS"] = cntr_emis_19_20_yrds[
+    "State-County FIPS"
+].astype(int)
 geometry = gpd.points_from_xy(
     cntr_emis_19_20_yrds["Site Longitude"], cntr_emis_19_20_yrds["Site Latitude"]
 )
 cntr_emis_19_20_yrds_gpd = gpd.GeoDataFrame(
     cntr_emis_19_20_yrds, geometry=geometry, crs="EPSG:4326"
 )
+conn = psycopg2.connect(f"dbname=locoei_lh_emis user=postgres " f"password=civil123")
+conn.set_session(autocommit=True)
+cur = conn.cursor()
+cur.execute("DROP TABLE public.yard_point_emis;")
+conn.close()
+
 
 engine = create_engine("postgresql://postgres:civil123@localhost:5432/locoei_lh_emis")
 cntr_emis_19_20_yrds_gpd.to_postgis("yard_point_emis", con=engine)
