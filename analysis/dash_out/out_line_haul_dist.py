@@ -1,5 +1,5 @@
 """
-Output Line-Haul Fuel Consumption and Emission Distribution
+Output Line-Haul Emission Distribution
 Created by: Apoorb
 Created on: 06/03/2022
 """
@@ -164,11 +164,12 @@ cntr_emis_19_20_linehaul_cls3_p_c_["emis_ton_by_carrier"] = (
     cntr_emis_19_20_linehaul_cls3_p_c_.controlled_em_quant_ton
     * cntr_emis_19_20_linehaul_cls3_p_c_.carrier_dist
 )
+cntr_emis_19_20_linehaul_cls3_p_c_ = cntr_emis_19_20_linehaul_cls3_p_c_.drop(columns="controlled_em_quant_ton")
 cntr_cls3_pc_c_lh = cntr_emis_19_20_linehaul_cls3_p_c_.merge(
     fuel_cnsp_cls3_p_c, on=["carrier"]
 )
 cntr_cls3_pc_c_lh["emis_linehaul"] = (
-    cntr_cls3_pc_c_lh.controlled_em_quant_ton * cntr_cls3_pc_c_lh.milemx
+    cntr_cls3_pc_c_lh.emis_ton_by_carrier * cntr_cls3_pc_c_lh.milemx
 )
 cntr_cls3_pc_c_lh.columns
 cntr_cls3_pc_c_lh_ = (
@@ -330,10 +331,24 @@ narl20_cls1_3_p_c_gpd_v1 = narl20_cls1_3_p_c_gpd.filter(
         "pollutant": "Pollutant",
         "pol_desc": "Pol Desc",
         "em_fac": "Emission Factor (grams/gallon)",
-        "emis_linehaul":  "Emission (Tons)",
+        "emis_linehaul":  "Emission (U.S. Tons)",
         "geometry": "geometry",
     }
 )
+
+narl20_cls1_3_p_c_gpd_v1["Emission (U.S. Tons/Mile)"] = narl20_cls1_3_p_c_gpd_v1["Emission (U.S. Tons)"] / narl20_cls1_3_p_c_gpd_v1["Miles"]
+
+
+test = narl20_cls1_3_p_c_gpd_v1.groupby(["SCC Description Level 4", "Pollutant", "Year"])["Emission (U.S. Tons)"].sum().reset_index()
+#
+# co2_emis_fac_grams_per_gal = 10084.14
+# us_ton_to_grams=907185
+# co2_emis_fac_us_tons_per_gal = co2_emis_fac_grams_per_gal / us_ton_to_grams
+# fuel_cnsp_back = narl20_cls1_3_p_c_gpd_v1.loc[
+#     lambda df: df.Pollutant == "CO2",
+#     ['FRA Arc ID', "Year", "SCC", 'Emission (Tons/Mile)']]
+# fuel_cnsp_back["Fuel Consumption (Gallon/Mile)"] = fuel_cnsp_back['Emission (U.S. Ton/Mile)'] / co2_emis_fac_us_tons_per_gal
+
 
 conn = psycopg2.connect(
     f"dbname=postgres user=postgres "
@@ -341,12 +356,21 @@ conn = psycopg2.connect(
 )
 conn.set_session(autocommit=True)
 cur = conn.cursor()
-cur.execute("DROP DATABASE IF EXISTS locoei_lh_emis;")
+cur.execute("DROP DATABASE locoei_lh_emis;")
+cur.execute("COMMIT")
 cur.execute("CREATE DATABASE locoei_lh_emis;")
+conn.close()
+
+conn = psycopg2.connect(
+    f"dbname=locoei_lh_emis user=postgres "
+    f"password=civil123"
+)
+conn.set_session(autocommit=True)
+cur = conn.cursor()
 cur.execute("CREATE EXTENSION postgis;")
 conn.close()
 
 
 engine = create_engine("postgresql://postgres:civil123@localhost:5432/locoei_lh_emis")
-narl20_cls1_3_p_c_gpd_v1.to_postgis("public.cls1_cls3_p_c_line_emis", con=engine)
+narl20_cls1_3_p_c_gpd_v1.to_postgis("cls1_cls3_p_c_line_emis", con=engine)
 #######################################################################################
