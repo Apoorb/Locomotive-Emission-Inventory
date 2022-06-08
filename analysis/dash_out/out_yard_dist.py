@@ -74,7 +74,7 @@ cntr_emis_19_20_yrds_gpd = gpd.GeoDataFrame(
 conn = psycopg2.connect(f"dbname=locoei_lh_emis user=postgres " f"password=civil123")
 conn.set_session(autocommit=True)
 cur = conn.cursor()
-cur.execute("DROP TABLE public.yard_point_emis;")
+cur.execute("DROP TABLE IF EXISTS public.yard_point_emis;")
 conn.close()
 
 
