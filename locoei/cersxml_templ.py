@@ -47,9 +47,7 @@ def modify_template_header(
     return templ_root_header_
 
 
-def delele_253_county_loc(
-    templ_root_payload_cers_: xml.etree.ElementTree.Element,
-):
+def delele_253_county_loc(templ_root_payload_cers_: xml.etree.ElementTree.Element,):
     counter_ = 1
     for child in templ_root_payload_cers_.findall("payload:Location", ns):
         if counter_ > 1:
@@ -80,14 +78,12 @@ def delete_2_extra_scc_loc_em_prc(
 def set_generic_sourceclassificationcode_emtype(
     templ_root_payload_cers_loc_locemprc_: xml.etree.ElementTree.Element,
 ):
-    templ_root_payload_cers_loc_locemprc_scc = (
-        templ_root_payload_cers_loc_locemprc_.find(
-            "payload:SourceClassificationCode", ns
-        )
+    templ_root_payload_cers_loc_locemprc_scc = templ_root_payload_cers_loc_locemprc_.find(
+        "payload:SourceClassificationCode", ns
     )
     templ_root_payload_cers_loc_locemprc_scc.text = "ten_digit_scc"
-    templ_root_payload_cers_loc_locemprc_emtype = (
-        templ_root_payload_cers_loc_locemprc_.find("payload:EmissionsTypeCode", ns)
+    templ_root_payload_cers_loc_locemprc_emtype = templ_root_payload_cers_loc_locemprc_.find(
+        "payload:EmissionsTypeCode", ns
     )
     templ_root_payload_cers_loc_locemprc_emtype.text = "X"
 
@@ -97,15 +93,11 @@ def get_annual_o3d_pollutants_erg(
     templ_root_payload_cers_loc_locemprc_report_period_O3D_: xml.etree.ElementTree.Element,
     ns_,
 ) -> dict:
-    annual_pollutant_elements = (
-        templ_root_payload_cers_loc_locemprc_report_period_A_.findall(
-            "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
-        )
+    annual_pollutant_elements = templ_root_payload_cers_loc_locemprc_report_period_A_.findall(
+        "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
     )
-    o3d_pollutant_elements = (
-        templ_root_payload_cers_loc_locemprc_report_period_O3D_.findall(
-            "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
-        )
+    o3d_pollutant_elements = templ_root_payload_cers_loc_locemprc_report_period_O3D_.findall(
+        "payload:ReportingPeriodEmissions" "/payload:PollutantCode", ns_
     )
     return {
         "annual_pollutant_elements": annual_pollutant_elements,
@@ -186,7 +178,9 @@ def modify_payload(
     ns: dict,
 ) -> xml.etree.ElementTree.Element:
 
-    templ_root_.find(".//header:Property/[header:PropertyValue='Nonroad']/header:PropertyValue", ns).text = "Nonpoint"
+    templ_root_.find(
+        ".//header:Property/[header:PropertyValue='Nonroad']/header:PropertyValue", ns
+    ).text = "Nonpoint"
     templ_root_payload = templ_root_.find("header:Payload", ns)
     templ_root_payload_cers = templ_root_payload.find("payload:CERS", ns)
     delele_253_county_loc(templ_root_payload_cers_=templ_root_payload_cers)
@@ -210,17 +204,13 @@ def modify_payload(
         "payload:LocationEmissionsProcess", ns
     )
     set_generic_sourceclassificationcode_emtype(
-        templ_root_payload_cers_loc_locemprc_=templ_root_payload_cers_loc_locemprc,
+        templ_root_payload_cers_loc_locemprc_=templ_root_payload_cers_loc_locemprc
     )
-    templ_root_payload_cers_loc_locemprc_report_period_A = (
-        templ_root_payload_cers_loc_locemprc.find(
-            "payload:ReportingPeriod/[payload:ReportingPeriodTypeCode='A']", ns
-        )
+    templ_root_payload_cers_loc_locemprc_report_period_A = templ_root_payload_cers_loc_locemprc.find(
+        "payload:ReportingPeriod/[payload:ReportingPeriodTypeCode='A']", ns
     )
-    templ_root_payload_cers_loc_locemprc_report_period_O3D = (
-        templ_root_payload_cers_loc_locemprc.find(
-            "payload:ReportingPeriod/[payload:ReportingPeriodTypeCode='O3D']", ns
-        )
+    templ_root_payload_cers_loc_locemprc_report_period_O3D = templ_root_payload_cers_loc_locemprc.find(
+        "payload:ReportingPeriod/[payload:ReportingPeriodTypeCode='O3D']", ns
     )
     annual_o3d_pol_dict = get_annual_o3d_pollutants_erg(
         templ_root_payload_cers_loc_locemprc_report_period_A_=templ_root_payload_cers_loc_locemprc_report_period_A,
@@ -252,7 +242,7 @@ def modify_payload(
     )
 
     templ_pol_rep_per_cpy = deepcopy_reportingperiodemissions_complex_for_template(
-        templ_root_payload_cers_loc_locemprc_report_period_A_=templ_root_payload_cers_loc_locemprc_report_period_A,
+        templ_root_payload_cers_loc_locemprc_report_period_A_=templ_root_payload_cers_loc_locemprc_report_period_A
     )
     create_pollutant_complexes_in_tti_output_not_in_erg(
         extra_tti_pollutants=extra_tti_pollutants_a,
@@ -325,11 +315,17 @@ def modify_payload(
             if pol == "NOX":
                 emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt. Also considers TxLED factor."
             elif pol == "CO2":
-                emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+                emis_calc_comment.text = (
+                    "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+                )
             elif pol == "SO2":
-                emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+                emis_calc_comment.text = (
+                    "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+                )
             else:
-                emis_calc_comment.text = "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+                emis_calc_comment.text = (
+                    "Based on https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P100500B.txt"
+                )
         elif pol in spec_pol:
             emis_calc_mthd_cd.text = "5"
             emis_calc_comment.text = "Most recent EPA speciation table"
@@ -337,7 +333,6 @@ def modify_payload(
             raise ValueError("pollutant not handled in if-elif.")
         rep_per.append(emis_calc_mthd_cd)
         rep_per.append(emis_calc_comment)
-
 
 
 def print_xml_lines(tree_elem: xml.etree.ElementTree.Element, max_lines=10) -> None:
@@ -349,10 +344,7 @@ def print_xml_lines(tree_elem: xml.etree.ElementTree.Element, max_lines=10) -> N
         line_no += 1
 
 
-def print_elem(
-    parent_elem: xml.etree.ElementTree.Element,
-    num_sub_elem=20,
-):
+def print_elem(parent_elem: xml.etree.ElementTree.Element, num_sub_elem=20):
     counter_ = 1
     for elem in parent_elem.iter():
         print(elem)
@@ -361,10 +353,7 @@ def print_elem(
         counter_ += 1
 
 
-def print_child(
-    parent_elem: xml.etree.ElementTree.Element,
-    num_children=20,
-):
+def print_child(parent_elem: xml.etree.ElementTree.Element, num_children=20):
     counter_ = 1
     for elem in parent_elem:
         print(elem)

@@ -79,9 +79,7 @@ def project_filt_fuel_consump(
             ]
         )
         .rename(columns={"link_fuel_consmp": "link_fuel_consmp_2019"})
-        .assign(
-            year=[list(np.arange(2011, 2051))] * len(fuel_consump_),
-        )
+        .assign(year=[list(np.arange(2011, 2051))] * len(fuel_consump_))
         .explode("year")
         .merge(proj_fac_, on=["rr_group", "year"], how="outer")
         .assign(
@@ -100,14 +98,7 @@ def merge_cnty_nm_to_fuel_proj(
     """
     fuel_consump_prj_by_cnty_ = (
         fuel_consump_prj_.groupby(
-            [
-                "year",
-                "stcntyfips",
-                "carrier",
-                "friylab",
-                "rr_netgrp",
-                "rr_group",
-            ]
+            ["year", "stcntyfips", "carrier", "friylab", "rr_netgrp", "rr_group"]
         )
         .agg(
             county_carr_friy_yardnm_fuel_consmp_by_yr=("link_fuel_consmp_by_yr", "sum"),
@@ -141,28 +132,22 @@ def add_scc_desc_to_fuel_proj_cnty(
         "yards. This is inline with how fuel consumption is coded for Amtrak."
     )
 
-    assert (
-        set(
-            fuel_consump_prj_by_cnty_.loc[
-                lambda df: ((df.rr_group == "Commuter") & (df.carrier == "DART")),
-                "rr_netgrp",
-            ].unique()
-        )
-        == {"Freight"}
-    ), (
+    assert set(
+        fuel_consump_prj_by_cnty_.loc[
+            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "DART")),
+            "rr_netgrp",
+        ].unique()
+    ) == {"Freight"}, (
         "Above mapping does not consider DART on industrial leads and "
         "yards. This is inline with how fuel consumption is coded for DART."
     )
 
-    assert (
-        set(
-            fuel_consump_prj_by_cnty_.loc[
-                lambda df: ((df.rr_group == "Commuter") & (df.carrier == "TREX")),
-                "rr_netgrp",
-            ].unique()
-        )
-        == {"Freight", "Industrial", "Yard"}
-    ), (
+    assert set(
+        fuel_consump_prj_by_cnty_.loc[
+            lambda df: ((df.rr_group == "Commuter") & (df.carrier == "TREX")),
+            "rr_netgrp",
+        ].unique()
+    ) == {"Freight", "Industrial", "Yard"}, (
         "Above mapping considers TREX on Freight, industrial leads, and "
         "yards. This is inline with how fuel consumption is coded for TREX."
     )
@@ -200,8 +185,7 @@ def prc_ertac_2017_yard_vals(path_ertac_2017_: str, fuel_consump_: pd.DataFrame)
 
 
 def distr_yard_fuel_usage_by_ertac_2017_yard_vals(
-    fuel_consump_prj_by_cnty_scc_: pd.DataFrame,
-    ertac_2017_yard_vals_: pd.DataFrame,
+    fuel_consump_prj_by_cnty_scc_: pd.DataFrame, ertac_2017_yard_vals_: pd.DataFrame
 ):
     """Distribute Yard fuel usage at county level to different yards using
     the ertac data. This function is a later addition, that's why it's not
@@ -212,10 +196,7 @@ def distr_yard_fuel_usage_by_ertac_2017_yard_vals(
             lambda df: df.scc_description_level_4 != "Yard Locomotives"
         ]
         .assign(
-            eis_facility_id=-99,
-            yardname_v1=-99,
-            site_latitude=-99,
-            site_longitude=-99,
+            eis_facility_id=-99, yardname_v1=-99, site_latitude=-99, site_longitude=-99
         )
         .filter(
             items=[

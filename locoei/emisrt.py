@@ -8,11 +8,7 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
-from locoerlt.utilis import (
-    PATH_INTERIM,
-    get_out_file_tsmp,
-    cleanup_prev_output,
-)
+from locoei.utilis import PATH_INTERIM, get_out_file_tsmp, cleanup_prev_output
 
 
 def expected_pol_list(path_exp_pol_list_: str) -> pd.DataFrame:
@@ -248,9 +244,7 @@ def co2_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
     of CO2 by C: https://nepis.epa.gov/Exe/ZyPURL.cgi?Dockey=P1001YTF.txt
     """
     co2_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "CO"].assign(
-        pollutant="CO2",
-        pol_type="GHG",
-        pol_desc="Carbon Dioxide",
+        pollutant="CO2", pol_type="GHG", pol_desc="Carbon Dioxide"
     )
     co2_em_fac_df_1 = co2_em_fac_df.assign(
         em_fac=2778 * 0.99 * (44 / 12),
@@ -282,11 +276,7 @@ def co_fac(em_fac_df_template_: pd.DataFrame) -> pd.DataFrame:
                 ),
                 df.scc_description_level_4.isin(["Yard Locomotives"]),
             ],
-            [
-                1.28 * 20.8,
-                1.28 * 18.2,
-                1.83 * 15.2,
-            ],
+            [1.28 * 20.8, 1.28 * 18.2, 1.83 * 15.2],
             np.nan,
         ),
         anals_yr=[list(np.arange(2011, 2051, 1))] * len(co_em_fac_df),
@@ -351,30 +341,25 @@ def so2_fac(
     so2_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == "SO2"]
     so2_em_fac_df_1 = (
         so2_em_fac_df.assign(
-            anals_yr=[list(np.arange(2011, 2051, 1))] * len(so2_em_fac_df),
+            anals_yr=[list(np.arange(2011, 2051, 1))] * len(so2_em_fac_df)
         )
         .explode(column="anals_yr")
         .assign(
             em_fac=lambda df: np.select(
-                [
-                    df.anals_yr <= 2011,
-                    df.anals_yr >= 2012,
-                ],
+                [df.anals_yr <= 2011, df.anals_yr >= 2012],
                 [
                     (0.1346 * 23809.5) * 0.97 * (64 / 32) * pre_2011_sulfur_ppm * 1e-6,
                     (0.1346 * 23809.5) * 0.97 * (64 / 32) * post_2011_sulfur_ppm * 1e-6,
                 ],
                 np.nan,
-            ),
+            )
         )
     )
     return so2_em_fac_df_1
 
 
 def epa_2009_proj_table_fac(
-    em_fac_df_template_: pd.DataFrame,
-    pollutant: str,
-    epa_2009_rts: pd.DataFrame,
+    em_fac_df_template_: pd.DataFrame, pollutant: str, epa_2009_rts: pd.DataFrame
 ) -> pd.DataFrame:
     """
     Provides emission rates based on the data from epa_tech_report_fac()
@@ -402,9 +387,7 @@ def epa_2009_proj_table_fac(
     pol_em_fac_df = em_fac_df_template_[lambda df: df.pollutant == pollutant]
     pol_em_fac_df_1 = (
         pol_em_fac_df.drop(columns="em_fac")
-        .assign(
-            anals_yr=[list(np.arange(2011, 2051, 1))] * len(pol_em_fac_df),
-        )
+        .assign(anals_yr=[list(np.arange(2011, 2051, 1))] * len(pol_em_fac_df))
         .explode(column="anals_yr")
         .merge(
             epa_2009_rts,

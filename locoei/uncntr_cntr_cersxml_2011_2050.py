@@ -254,12 +254,10 @@ def get_uncntr_cntr_xml(
             scc_elem.text = scc
             try:
                 relevant_data = grp_uncntr_cntr.get_group((county, scc))
-                reportingperiod_annual_reportingperiodemissions = (
-                    locationemissionsprocess_template_cpy_cpy.findall(
-                        "*/[payload:ReportingPeriodTypeCode='A']"
-                        "/payload:ReportingPeriodEmissions",
-                        ns,
-                    )
+                reportingperiod_annual_reportingperiodemissions = locationemissionsprocess_template_cpy_cpy.findall(
+                    "*/[payload:ReportingPeriodTypeCode='A']"
+                    "/payload:ReportingPeriodEmissions",
+                    ns,
                 )
                 for (
                     reportingperiodemission
@@ -271,16 +269,13 @@ def get_uncntr_cntr_xml(
                         "payload:TotalEmissions", ns
                     )
                     replace_value = relevant_data.loc[
-                        lambda df: df.pollutant_str == cur_pollutant,
-                        pol_ton_col,
+                        lambda df: df.pollutant_str == cur_pollutant, pol_ton_col
                     ].values[0]
                     cur_pollutant_emission.text = replace_value
-                reportingperiod_daily_reportingperiodemissions = (
-                    locationemissionsprocess_template_cpy_cpy.findall(
-                        "*/[payload:ReportingPeriodTypeCode='O3D']"
-                        "/payload:ReportingPeriodEmissions",
-                        ns,
-                    )
+                reportingperiod_daily_reportingperiodemissions = locationemissionsprocess_template_cpy_cpy.findall(
+                    "*/[payload:ReportingPeriodTypeCode='O3D']"
+                    "/payload:ReportingPeriodEmissions",
+                    ns,
                 )
                 for (
                     reportingperiodemission
@@ -292,8 +287,7 @@ def get_uncntr_cntr_xml(
                         "payload:TotalEmissions", ns
                     )
                     replace_value = relevant_data.loc[
-                        lambda df: df.pollutant_str == cur_pollutant,
-                        pol_ton_daily_col,
+                        lambda df: df.pollutant_str == cur_pollutant, pol_ton_daily_col
                     ].values[0]
                     cur_pollutant_emission.text = replace_value
             except KeyError:

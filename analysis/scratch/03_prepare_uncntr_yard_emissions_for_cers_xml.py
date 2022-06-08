@@ -2,9 +2,7 @@ import os
 import glob
 import pandas as pd
 import pyodbc
-from locoerlt.utilis import (
-    PATH_PROCESSED,
-)
+from locoerlt.utilis import PATH_PROCESSED
 
 path_uncntr_emisquant = glob.glob(
     os.path.join(PATH_PROCESSED, "uncntr_emis_quant_[0-9]*-*-*.csv")

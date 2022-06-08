@@ -62,7 +62,7 @@ txrail_2020_preprs = preprc_link(
 
 
 txrail_2020_preprs_agg_st = txrail_2020_preprs.groupby(["carrier", "net"]).agg(
-    totnetmiles=("miles", "sum"),
+    totnetmiles=("miles", "sum")
 )
 
 txrail_2020_preprs_agg_st_fuel = txrail_2020_preprs_agg_st.merge(

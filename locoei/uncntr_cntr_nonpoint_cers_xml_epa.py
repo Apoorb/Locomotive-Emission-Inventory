@@ -2,9 +2,7 @@ import os
 import glob
 import pandas as pd
 import pyodbc
-from locoerlt.utilis import (
-    PATH_PROCESSED,
-)
+from locoerlt.utilis import PATH_PROCESSED
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
@@ -28,13 +26,7 @@ def set_yard_uncntr_cntr_xml(
             & (df.year == 2020)
         ]
         .filter(
-            items=[
-                "stcntyfips",
-                "county_name",
-                "scc",
-                "pollutant",
-                emis_quant_ton_col,
-            ]
+            items=["stcntyfips", "county_name", "scc", "pollutant", emis_quant_ton_col]
         )
         .rename(
             columns={
@@ -62,14 +54,14 @@ def set_emissiosn_yard_xml(uncntr_or_cntr_emisquant_nonpoint_2020_, conn_, curso
         "EmissionsUnitofMeasureCode",
         "EmissionCalculationMethodCode",
     ]
-    uncntr_or_cntr_emisquant_nonpoint_emisssions_a = (
-        uncntr_or_cntr_emisquant_nonpoint_2020_.assign(
-            ReportingPeriodTypeCode="A",
-            PollutantCode=lambda df: df.pollutant,
-            TotalEmissions=lambda df: df.TotalEmissions,
-            EmissionsUnitofMeasureCode="TON",
-            EmissionCalculationMethodCode="8",
-        ).filter(items=emissiosns_cols)
+    uncntr_or_cntr_emisquant_nonpoint_emisssions_a = uncntr_or_cntr_emisquant_nonpoint_2020_.assign(
+        ReportingPeriodTypeCode="A",
+        PollutantCode=lambda df: df.pollutant,
+        TotalEmissions=lambda df: df.TotalEmissions,
+        EmissionsUnitofMeasureCode="TON",
+        EmissionCalculationMethodCode="8",
+    ).filter(
+        items=emissiosns_cols
     )
     uncntr_or_cntr_emisquant_nonpoint_emisssions_o3d = (
         uncntr_or_cntr_emisquant_nonpoint_2020_.loc[

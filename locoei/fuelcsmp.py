@@ -8,7 +8,7 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
-from locoerlt.utilis import (
+from locoei.utilis import (
     PATH_RAW,
     PATH_INTERIM,
     get_out_file_tsmp,
@@ -175,7 +175,7 @@ def get_class_1_freight_fuel_consump(
         .assign(
             st_fuel_consmp_all_cls1=lambda df: (
                 df.groupby("friylab").st_fuel_consmp.transform(sum)
-            ),
+            )
         )
         .merge(cls1_cntpct_prc, on="carrier", how="inner")
         .rename(
@@ -341,12 +341,10 @@ def get_fuel_consmp_by_cnty_carrier(
         path_cls1_cntpct_=path_cls1_cntpct_,
         cls1_carriers_=cls1_carriers_,
     )
-    txrail_milemx_cls3_comut_pasng_19 = (
-        get_cls1_yard_cls1_indus_cls3_passenger_commuter_fuel_consump(
-            fueluse2019_preprc_=fueluse2019_preprc,
-            strail_2020_preprocess_=txrail_2020_preprs,
-            cls1_carriers_=cls1_carriers_,
-        )
+    txrail_milemx_cls3_comut_pasng_19 = get_cls1_yard_cls1_indus_cls3_passenger_commuter_fuel_consump(
+        fueluse2019_preprc_=fueluse2019_preprc,
+        strail_2020_preprocess_=txrail_2020_preprs,
+        cls1_carriers_=cls1_carriers_,
     )
     txrail_milemx_cls_1_3_comut_pasng_19 = pd.concat(
         [
@@ -420,12 +418,10 @@ if __name__ == "__main__":
         cls1_carriers_=cls1_carriers,
     )
 
-    txrail_milemx_cls3_comut_pasng_19 = (
-        get_cls1_yard_cls1_indus_cls3_passenger_commuter_fuel_consump(
-            fueluse2019_preprc_=fueluse2019_preprc,
-            strail_2020_preprocess_=txrail_2020_preprs,
-            cls1_carriers_=cls1_carriers,
-        )
+    txrail_milemx_cls3_comut_pasng_19 = get_cls1_yard_cls1_indus_cls3_passenger_commuter_fuel_consump(
+        fueluse2019_preprc_=fueluse2019_preprc,
+        strail_2020_preprocess_=txrail_2020_preprs,
+        cls1_carriers_=cls1_carriers,
     )
 
     txrail_milemx_cls_1_3_comut_pasng_19 = get_fuel_consmp_by_cnty_carrier(

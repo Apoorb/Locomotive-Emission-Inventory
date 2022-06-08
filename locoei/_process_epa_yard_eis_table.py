@@ -23,9 +23,7 @@ yards_2020 = (
     ]
     .drop_duplicates(["stcntyfips", "eis_facility_id", "yardname_v1"])
     .filter(items=["stcntyfips", "eis_facility_id", "yardname_v1"])
-    .assign(
-        ertac_yards=1,
-    )
+    .assign(ertac_yards=1)
     .reset_index(drop=True)
 )
 

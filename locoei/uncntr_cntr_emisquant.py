@@ -103,9 +103,7 @@ def get_deri_quantity_red(
     """
     deri_regions = (
         pd.read_json(path_deri_loco_regions_, orient="index")
-        .assign(
-            no_counties_reg=lambda df: df.counties.apply(lambda x: len(x)),
-        )
+        .assign(no_counties_reg=lambda df: df.counties.apply(lambda x: len(x)))
         .explode("counties")
         .assign(tp_county_nm=lambda df: df.counties.str.lower().str.strip())
     )
@@ -124,13 +122,7 @@ def get_deri_quantity_red(
             ),
         )
         .explode("year")
-        .filter(
-            items=[
-                "region",
-                "year",
-                "nox_red_tons_per_yr",
-            ]
-        )
+        .filter(items=["region", "year", "nox_red_tons_per_yr"])
         .groupby(["region", "year"])
         .agg(nox_red_tons_per_yr=("nox_red_tons_per_yr", "sum"))
         .reset_index()
@@ -172,7 +164,7 @@ def get_deri_uncontrolled_quant(
 ) -> dict:
     """"""
     uncontrolled_emis_quant_deri = emis_quant_agg_.assign(
-        tp_county_nm=lambda df: df.county_name.str.lower().str.strip(),
+        tp_county_nm=lambda df: df.county_name.str.lower().str.strip()
     ).merge(
         (
             deri_loco_nox_red_yr_prcd_emis_quant_region_.filter(

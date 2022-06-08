@@ -37,15 +37,8 @@ if __name__ == "__main__":
         uncntr_emisquant.loc[
             lambda df: df.year.isin([2019]) & (df.pollutant.isin(["CO"]))
         ]
-        .groupby(
-            [
-                "year",
-                "scc_description_level_4",
-            ]
-        )
-        .agg(
-            statewide_fuel_by_scc=("county_carr_friy_yardnm_fuel_consmp_by_yr", "sum"),
-        )
+        .groupby(["year", "scc_description_level_4"])
+        .agg(statewide_fuel_by_scc=("county_carr_friy_yardnm_fuel_consmp_by_yr", "sum"))
     )
     statewide_fuel_usage_19.to_excel(path_statewide_19_sum)
 

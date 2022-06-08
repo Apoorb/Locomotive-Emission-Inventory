@@ -7,11 +7,7 @@ import os
 import inflection
 import pandas as pd
 import numpy as np
-from locoerlt.utilis import (
-    PATH_RAW,
-    PATH_INTERIM,
-    read_shapefile,
-)
+from locoerlt.utilis import PATH_RAW, PATH_INTERIM, read_shapefile
 from locoerlt.fuelcsmp import preprc_link, preprc_fuelusg
 
 path_natrail2020 = os.path.join(

@@ -25,9 +25,7 @@ def get_epa_eis_facility_unit_prc_identifiers(
         ]
         .drop_duplicates(["stcntyfips", "eis_facility_id", "yardname_v1"])
         .filter(items=["stcntyfips", "eis_facility_id", "yardname_v1"])
-        .assign(
-            ertac_yards=1,
-        )
+        .assign(ertac_yards=1)
         .reset_index(drop=True)
     )
 
@@ -46,13 +44,7 @@ def get_epa_eis_facility_unit_prc_identifiers(
         left_on="eis_facility_id",
         right_on="eis_facility_id",
         how="left",
-    ).filter(
-        items=[
-            "eis_facility_id",
-            "eis_unit_id",
-            "eis_process_id",
-        ]
-    )
+    ).filter(items=["eis_facility_id", "eis_unit_id", "eis_process_id"])
     return unique_yards_ertac_2017_epa_unit_prc_identifiers
 
 
@@ -160,14 +152,14 @@ def set_emissiosn_yard_xml(uncntr_cntr_emisquant_yards_2020_, conn_, cursor_):
         "EmissionCalculationMethodCode",
     ]
 
-    uncntr_cntr_emisquant_yards_2020_emisssions_a = (
-        uncntr_cntr_emisquant_yards_2020_.assign(
-            ReportingPeriodTypeCode="A",
-            EmissionOperatingTypeCode="R",
-            PollutantCode=lambda df: df.pollutant,
-            EmissionsUnitofMeasureCode="TON",
-            EmissionCalculationMethodCode="8",
-        ).filter(items=emissiosns_cols)
+    uncntr_cntr_emisquant_yards_2020_emisssions_a = uncntr_cntr_emisquant_yards_2020_.assign(
+        ReportingPeriodTypeCode="A",
+        EmissionOperatingTypeCode="R",
+        PollutantCode=lambda df: df.pollutant,
+        EmissionsUnitofMeasureCode="TON",
+        EmissionCalculationMethodCode="8",
+    ).filter(
+        items=emissiosns_cols
     )
 
     uncntr_cntr_emisquant_yards_2020_emisssions_o3d = (
