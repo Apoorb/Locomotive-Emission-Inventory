@@ -345,7 +345,6 @@ narl20_cls1_3_p_c_gpd_v1 = (
         )
     ]
 )
-narl20_cls1_3_p_c_gpd_v1.Pollutants
 narl20_cls1_3_p_c_gpd_v1["State-County FIPS"] = narl20_cls1_3_p_c_gpd_v1[
     "State-County FIPS"
 ].astype(int)
@@ -361,15 +360,6 @@ test = (
     .sum()
     .reset_index()
 )
-#
-# co2_emis_fac_grams_per_gal = 10084.14
-# us_ton_to_grams=907185
-# co2_emis_fac_us_tons_per_gal = co2_emis_fac_grams_per_gal / us_ton_to_grams
-# fuel_cnsp_back = narl20_cls1_3_p_c_gpd_v1.loc[
-#     lambda df: df.Pollutant == "CO2",
-#     ['FRA Arc ID', "Year", "SCC", 'Emission (Tons/Mile)']]
-# fuel_cnsp_back["Fuel Consumption (Gallon/Mile)"] = fuel_cnsp_back['Emission (U.S. Ton/Mile)'] / co2_emis_fac_us_tons_per_gal
-
 
 conn = psycopg2.connect(f"dbname=postgres user=postgres " f"password=civil123")
 conn.set_session(autocommit=True)
@@ -389,3 +379,14 @@ conn.close()
 engine = create_engine("postgresql://postgres:civil123@localhost:5432/locoei_lh_emis")
 narl20_cls1_3_p_c_gpd_v1.to_postgis("cls1_cls3_p_c_line_emis", con=engine)
 #######################################################################################
+
+#
+# co2_emis_fac_grams_per_gal = 10084.14
+# us_ton_to_grams=907185
+# co2_emis_fac_us_tons_per_gal = co2_emis_fac_grams_per_gal / us_ton_to_grams
+# fuel_cnsp_back = narl20_cls1_3_p_c_gpd_v1.loc[
+#     lambda df: df.Pollutant == "CO2",
+#     ['FRA Arc ID', "Year", "SCC", 'Emission (Tons/Mile)']]
+# fuel_cnsp_back["Fuel Consumption (Gallon/Mile)"] = fuel_cnsp_back[
+# 'Emission (U.S. Ton/Mile)'] / co2_emis_fac_us_tons_per_gal
+
