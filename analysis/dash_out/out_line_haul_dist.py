@@ -151,7 +151,7 @@ cntr_emis_19_20_linehaul_cls3_p_c = (
         )
     ]
     .groupby(
-        ["year", "scc", "scc_description_level_4", "county_name", "pol_type", "pollutant", "pol_desc"]
+        ["year", "scc", "scc_description_level_4", "pol_type", "pollutant", "pol_desc"]
     )
     .controlled_em_quant_ton.sum()
     .reset_index()
@@ -173,12 +173,10 @@ cntr_cls3_pc_c_lh = cntr_emis_19_20_linehaul_cls3_p_c_.merge(
 cntr_cls3_pc_c_lh["emis_linehaul"] = (
     cntr_cls3_pc_c_lh.emis_ton_by_carrier * cntr_cls3_pc_c_lh.milemx
 )
-cntr_cls3_pc_c_lh.columns
 cntr_cls3_pc_c_lh_ = (
     cntr_cls3_pc_c_lh.groupby(
         [
             "year",
-            "county_name",
             "rr_group",
             "fraarcid",
             "scc",
@@ -191,7 +189,6 @@ cntr_cls3_pc_c_lh_ = (
     .emis_linehaul.sum()
     .reset_index()
 )
-
 
 narl20_cls3_p_c_gpd = narl20_gpd.filter(
     items=[
@@ -244,6 +241,11 @@ narl20_cls3_p_c_gpd = narl20_cls3_p_c_gpd.merge(
     cntr_cls3_pc_c_lh_, left_on=["FRAARCID"], right_on=["fraarcid"]
 )
 
+cnty_name = cntr_emis_19_20[["stcntyfips", "county_name"]].drop_duplicates().reset_index(drop=True).rename(columns={"stcntyfips": "STCNTYFIPS"})
+len(narl20_cls3_p_c_gpd.STCNTYFIPS.unique())
+narl20_cls3_p_c_gpd["STCNTYFIPS"] = narl20_cls3_p_c_gpd["STCNTYFIPS"].astype(float)
+narl20_cls3_p_c_gpd = narl20_cls3_p_c_gpd.merge(cnty_name, on="STCNTYFIPS", how="left")
+narl20_cls3_p_c_gpd.county_name.isna().sum()
 set(narl20_cls1_gpd.columns).symmetric_difference(set(narl20_cls3_p_c_gpd.columns))
 
 narl20_cls1_3_p_c_gpd = pd.concat([narl20_cls1_gpd, narl20_cls3_p_c_gpd])
