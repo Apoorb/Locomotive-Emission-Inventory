@@ -58,7 +58,7 @@ cntr_emis_19_20_yrds = (
     )
     .loc[
         lambda df: df.Pollutant.isin(
-            ["7439921", "CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC", "CO2"]
+            ["CO", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC", "CO2"]
         )
     ]
 )

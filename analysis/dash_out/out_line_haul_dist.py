@@ -151,7 +151,7 @@ cntr_emis_19_20_linehaul_cls3_p_c = (
         )
     ]
     .groupby(
-        ["year", "scc", "scc_description_level_4", "pol_type", "pollutant", "pol_desc"]
+        ["year", "scc", "scc_description_level_4", "county_name", "pol_type", "pollutant", "pol_desc"]
     )
     .controlled_em_quant_ton.sum()
     .reset_index()
@@ -178,6 +178,7 @@ cntr_cls3_pc_c_lh_ = (
     cntr_cls3_pc_c_lh.groupby(
         [
             "year",
+            "county_name",
             "rr_group",
             "fraarcid",
             "scc",
@@ -341,7 +342,7 @@ narl20_cls1_3_p_c_gpd_v1 = (
     )
     .loc[
         lambda df: df.Pollutant.isin(
-            ["7439921", "CO", "NH3", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC", "CO2"]
+            ["CO", "NOX", "PM10-PRI", "PM25-PRI", "SO2", "VOC", "CO2"]
         )
     ]
 )
