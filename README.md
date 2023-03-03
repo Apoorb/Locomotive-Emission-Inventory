@@ -7,7 +7,7 @@ Project Organization
 ------------  
 
 .
-├── LICENSE  
+├── LICENSE 
 ├── README.md <- The top-level README for developers using this project.  
 ├── analysis  
 │   └── scratch <- Test issues with analysis.  
