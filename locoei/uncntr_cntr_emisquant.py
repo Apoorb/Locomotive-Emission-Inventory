@@ -7,7 +7,7 @@ import os
 import sys
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname("__file__"), "..")))
-from locoerlt.utilis import (
+from locoei.utilis import (
     PATH_RAW,
     PATH_INTERIM,
     PATH_PROCESSED,

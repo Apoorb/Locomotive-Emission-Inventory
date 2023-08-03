@@ -4,7 +4,7 @@ import re
 from pathlib import Path
 import os
 import glob
-import mariadb
+import mysql.connector as mariadb
 import time
 import datetime
 import pandas as pd
